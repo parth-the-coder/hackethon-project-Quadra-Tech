@@ -14,14 +14,14 @@
     <div class="aside-content">
       <div class="eyebrow">YOUR LEARNING, IN FOCUS</div>
       <h1>Make every<br>session <em>count.</em></h1>
-      <p>Your schedule, progress and institute updates—easy to find, all in one place.</p>
+      <p>Your schedule, progress, and institute updates—all in one place.</p>
       <div class="student-preview">
-        <div class="preview-avatar">AS</div>
-        <div><small>YOUR LEARNING SNAPSHOT</small><b>Keep your momentum going</b></div>
+        <div class="preview-avatar">🎓</div>
+        <div><small>STUDENT PORTAL</small><b>Your personalized dashboard</b></div>
         <span>↗</span>
       </div>
     </div>
-    <div class="aside-foot">A little more clarity for your learning journey.</div>
+    <div class="aside-foot">Role-aware student access with Row-Level Security.</div>
   </section>
 
   <section class="auth-main">
@@ -31,24 +31,33 @@
       <div class="eyebrow">STUDENT PORTAL</div>
       <h2>Good to see you</h2>
       <p class="auth-intro">Sign in to check your learning journey.</p>
+
+      {% if error %}
+      <div style="background: rgba(239, 68, 68, 0.15); border: 1px solid #ef4444; color: #fca5a5; padding: 10px 14px; border-radius: 8px; font-size: 0.85rem; margin-bottom: 1.25rem;">
+        {{ error }}
+      </div>
+      {% endif %}
+
       <div class="demo-notice">
-        <b>Prototype sign in</b>
-        <span>This demo opens a sample student profile. Production authentication should be handled by your server.</span>
+        <b>Credentials Notice</b>
+        <span>Use the email ID and password assigned to you by the administrator.</span>
       </div>
 
-      <form class="auth-form" data-demo-form data-target="/login/student">
-        <label for="identity">Student ID, email or username</label>
-        <input id="identity" name="identity" autocomplete="username" placeholder="e.g. aman.sharma@email.com" required>
+      <form class="auth-form" method="POST" action="/login/student">
+        <label for="identity">Student ID or Email</label>
+        <input id="identity" name="email" type="email" autocomplete="username" placeholder="e.g. aman@trainwise.com" required>
+
         <label for="password">Password</label>
-        <div class="password-wrap">
-          <input id="password" name="password" type="password" autocomplete="current-password" placeholder="Enter your password" required minlength="4">
+        <div class="password-wrap" style="position: relative;">
+          <input id="password" name="password" type="password" autocomplete="current-password" placeholder="Enter your password" required minlength="4" style="width: 100%;">
           <button class="password-toggle" type="button" aria-label="Show password">Show</button>
         </div>
+
         <div class="form-options">
-          <label class="check-label"><input type="checkbox"> Remember me</label>
+          <label class="check-label"><input type="checkbox" checked> Remember me</label>
           <a href="#" data-forgot>Forgot password?</a>
         </div>
-        <p class="form-error" aria-live="polite"></p>
+
         <button class="button button-dark auth-submit" type="submit">Continue to student portal <span>→</span></button>
       </form>
 

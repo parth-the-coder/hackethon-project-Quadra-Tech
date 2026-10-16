@@ -30,28 +30,40 @@
       <div class="eyebrow">ADMIN & TRAINER ACCESS</div>
       <h2>Welcome back</h2>
       <p class="auth-intro">Sign in to your operations workspace.</p>
+
+      {% if error %}
+      <div style="background: rgba(239, 68, 68, 0.15); border: 1px solid #ef4444; color: #fca5a5; padding: 10px 14px; border-radius: 8px; font-size: 0.85rem; margin-bottom: 1rem;">
+        {{ error }}
+      </div>
+      {% endif %}
+
       <div class="demo-notice">
-        <b>Prototype sign in</b>
-        <span>This demo uses role buttons to enter the workspace. Production authentication should be handled by your server.</span>
+        <b>Quick Pitch Access:</b>
+        <span>Admin: <code>admin@trainwise.com</code> / <code>admin123</code></span>
       </div>
 
-      <form class="auth-form" data-demo-form data-target="/login/admin">
+      <form class="auth-form" method="POST" action="/admin_login">
         <label for="identity">Email or username</label>
-        <input id="identity" name="identity" autocomplete="username" placeholder="director@institute.edu" required>
+        <input id="identity" name="email" autocomplete="username" placeholder="admin@trainwise.com" required value="admin@trainwise.com">
+        
         <label for="password">Password</label>
-        <div class="password-wrap">
-          <input id="password" name="password" type="password" autocomplete="current-password" placeholder="Enter your password" required minlength="4">
+        <div class="password-wrap" style="position: relative;">
+          <input id="password" name="password" type="password" autocomplete="current-password" placeholder="Enter password" required minlength="4" value="admin123" style="width: 100%;">
           <button class="password-toggle" type="button" aria-label="Show password">Show</button>
         </div>
+
         <div class="form-options">
-          <label class="check-label"><input type="checkbox"> Remember me</label>
+          <label class="check-label"><input type="checkbox" checked> Remember me</label>
           <a href="#" data-forgot>Forgot password?</a>
         </div>
-        <p class="form-error" aria-live="polite"></p>
+
         <button class="button button-dark auth-submit" type="submit">Continue as admin <span>→</span></button>
       </form>
 
-      <div class="trainer-option"><span>Presenting as a trainer?</span><a href="/login/trainer">Enter trainer demo →</a></div>
+      <div class="trainer-option" style="margin-top: 1.5rem;">
+        <span>Presenting as a trainer?</span>
+        <a href="/login/trainer">Enter trainer demo (RBAC active) →</a>
+      </div>
       <div class="auth-foot">Your role determines which institute information you can access.</div>
     </div>
   </section>
