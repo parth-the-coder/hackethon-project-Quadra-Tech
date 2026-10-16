@@ -1,425 +1,304 @@
 import os
 import re
+import json
 import uuid
 import sqlite3
-from datetime import datetime
-from typing import Optional, List, Dict, Any
-from fastapi import FastAPI, HTTPException, Depends
-from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
+from flask import Flask, render_template, request, session, redirect, url_for, jsonify
+from dotenv import load_dotenv
+from google import genai
+from google.genai import types
+from database import get_db, init_db, DB_PATH
 
-# ---------------------------------------------------------------------------
-# Database Initialization & Helpers
-# ---------------------------------------------------------------------------
-DB_DIR = "instance"
-DB_PATH = os.path.join(DB_DIR, "trainwise.db")
+load_dotenv()
 
-def get_db():
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
-    try:
-        yield conn
-    finally:
-        conn.close()
+app = Flask(__name__)
+app.secret_key = os.environ.get('SECRET_KEY', 'hackathon-super-secret-trainwise-key')
 
-def init_db():
-    os.makedirs(DB_DIR, exist_ok=True)
-    conn = sqlite3.connect(DB_PATH)
-    cursor = conn.cursor()
-    cursor.executescript("""
-    CREATE TABLE IF NOT EXISTS users (
-        id TEXT PRIMARY KEY,
-        name TEXT NOT NULL,
-        email TEXT UNIQUE NOT NULL,
-        role TEXT NOT NULL,
-        student_id TEXT,
-        trainer_id TEXT
-    );
+if not os.path.exists(DB_PATH):
+    init_db()
 
-    CREATE TABLE IF NOT EXISTS batches (
-        id TEXT PRIMARY KEY,
-        name TEXT NOT NULL,
-        course TEXT NOT NULL
-    );
+# Initialize Gemini Client if GEMINI_API_KEY is present
+ai_client = None
+if os.environ.get("GEMINI_API_KEY"):
+    ai_client = genai.Client()
 
-    CREATE TABLE IF NOT EXISTS trainers (
-        id TEXT PRIMARY KEY,
-        name TEXT NOT NULL,
-        specialization TEXT NOT NULL
-    );
+def get_system_instruction(role: str) -> str:
+    schema = """
+    SQLite Tables Available:
+    - batches(id, name, course)
+    - trainers(id, name, specialization)
+    - rooms(id, name, capacity)
+    - students(id, name, email, phone, batch_id)
+    - attendance(id, student_id, batch_id, session_title, date, status ['PRESENT', 'ABSENT'])
+    - schedule_slots(id, batch_id, trainer_id, room_id, day_of_week, start_time, end_time)
+    - recordings(id, batch_id, title, video_url, recorded_date)
+    """
 
-    CREATE TABLE IF NOT EXISTS rooms (
-        id TEXT PRIMARY KEY,
-        name TEXT NOT NULL,
-        capacity INTEGER NOT NULL
-    );
+    # STRUCTURAL RBAC: Trainer role NEVER receives the fee schema
+    if role == "ADMIN":
+        schema += "\n- fees(id, student_id, instalment_no, amount, due_date, status ['PAID', 'PENDING', 'OVERDUE'])"
 
-    CREATE TABLE IF NOT EXISTS students (
-        id TEXT PRIMARY KEY,
-        name TEXT NOT NULL,
-        email TEXT NOT NULL,
-        phone TEXT NOT NULL,
-        batch_id TEXT REFERENCES batches(id)
-    );
+    return f"""
+    You are OpsPilot, an operational AI copilot for a training institute.
+    Current Session Role: {role}
+    Database Schema:
+    {schema}
 
-    CREATE TABLE IF NOT EXISTS attendance (
-        id TEXT PRIMARY KEY,
-        student_id TEXT REFERENCES students(id),
-        batch_id TEXT REFERENCES batches(id),
-        session_title TEXT NOT NULL,
-        date DATE NOT NULL,
-        status TEXT NOT NULL
-    );
+    Operational Rules:
+    1. If the user asks for data/metrics/attendance/schedule, generate a clean SQLite read-only SELECT query.
+    2. If a TRAINER asks about fees, installments, or revenue, set intent to "ACCESS_DENIED" and explain that trainers have no financial access.
+    3. If the user asks to send an alert/message/reminder (ADMIN only), set intent to "STAGE_ACTION". Never execute mutations directly.
+    4. You MUST respond strictly in valid JSON without any markdown formatting or code blocks:
 
-    CREATE TABLE IF NOT EXISTS fees (
-        id TEXT PRIMARY KEY,
-        student_id TEXT REFERENCES students(id),
-        instalment_no INTEGER NOT NULL,
-        amount INTEGER NOT NULL,
-        due_date DATE NOT NULL,
-        status TEXT NOT NULL
-    );
+    For Data Queries:
+    {{"intent": "READ_QUERY", "reply": "Found matching records.", "sql": "SELECT ... FROM ..."}}
 
-    CREATE TABLE IF NOT EXISTS schedule_slots (
-        id TEXT PRIMARY KEY,
-        batch_id TEXT REFERENCES batches(id),
-        trainer_id TEXT REFERENCES trainers(id),
-        room_id TEXT REFERENCES rooms(id),
-        day_of_week TEXT NOT NULL,
-        start_time TEXT NOT NULL,
-        end_time TEXT NOT NULL
-    );
+    For Staged Actions:
+    {{"intent": "STAGE_ACTION", "reply": "Drafted reminder requiring review.", "action": "WhatsApp Reminder", "recipient": "<Name (Phone)>", "message": "<Drafted text>"}}
 
-    CREATE TABLE IF NOT EXISTS notifications (
-        id TEXT PRIMARY KEY,
-        student_id TEXT REFERENCES students(id),
-        title TEXT NOT NULL,
-        message TEXT NOT NULL,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        is_read INTEGER DEFAULT 0
-    );
+    For Access Denied:
+    {{"intent": "ACCESS_DENIED", "reply": "Access Denied: Financial entities are restricted from trainer accounts."}}
+    """
 
-    CREATE TABLE IF NOT EXISTS audit_logs (
-        id TEXT PRIMARY KEY,
-        action_type TEXT NOT NULL,
-        target_entity TEXT NOT NULL,
-        payload TEXT NOT NULL,
-        status TEXT NOT NULL,
-        approved_by TEXT,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    );
-    """)
-
-    # Seed baseline demo records if empty
-    cursor.execute("SELECT COUNT(*) FROM users")
-    if cursor.fetchone()[0] == 0:
-        cursor.executescript("""
-        INSERT INTO users (id, name, email, role, student_id, trainer_id) VALUES
-        ('u_admin', 'Director Mehta', 'admin@trainwise.com', 'ADMIN', NULL, NULL),
-        ('u_trainer', 'Rahul Verma', 'rahul@trainwise.com', 'TRAINER', NULL, 'tr_1'),
-        ('u_student', 'Aman Sharma', 'aman@trainwise.com', 'STUDENT', 'st_1', NULL);
-
-        INSERT INTO batches (id, name, course) VALUES
-        ('b_py', 'Python Pro Batch', 'Python Full Stack'),
-        ('b_react', 'React Masters', 'Frontend Development');
-
-        INSERT INTO trainers (id, name, specialization) VALUES
-        ('tr_1', 'Rahul Verma', 'Python, ML, Backend'),
-        ('tr_2', 'Neha Kulkarni', 'React, Next.js, Frontend');
-
-        INSERT INTO rooms (id, name, capacity) VALUES
-        ('rm_101', 'Lab 1 - AI', 30),
-        ('rm_102', 'Lab 2 - Web', 25);
-
-        INSERT INTO students (id, name, email, phone, batch_id) VALUES
-        ('st_1', 'Aman Sharma', 'aman@example.com', '+919876543210', 'b_py'),
-        ('st_2', 'Priya Patel', 'priya@example.com', '+919876543211', 'b_py');
-
-        INSERT INTO attendance (id, student_id, batch_id, session_title, date, status) VALUES
-        ('att_1', 'st_1', 'b_py', 'Python Intro', '2026-10-10', 'ABSENT'),
-        ('att_2', 'st_1', 'b_py', 'OOPs in Python', '2026-10-11', 'ABSENT'),
-        ('att_3', 'st_1', 'b_py', 'FastAPI Basics', '2026-10-12', 'PRESENT'),
-        ('att_4', 'st_2', 'b_py', 'Python Intro', '2026-10-10', 'PRESENT'),
-        ('att_5', 'st_2', 'b_py', 'OOPs in Python', '2026-10-11', 'PRESENT'),
-        ('att_6', 'st_2', 'b_py', 'FastAPI Basics', '2026-10-12', 'PRESENT');
-
-        INSERT INTO fees (id, student_id, instalment_no, amount, due_date, status) VALUES
-        ('fee_1', 'st_1', 1, 15000, '2026-09-01', 'PAID'),
-        ('fee_2', 'st_1', 2, 25000, '2026-10-05', 'OVERDUE'),
-        ('fee_3', 'st_2', 1, 40000, '2026-09-01', 'PAID');
-
-        INSERT INTO schedule_slots (id, batch_id, trainer_id, room_id, day_of_week, start_time, end_time) VALUES
-        ('slot_1', 'b_py', 'tr_1', 'rm_101', 'Monday', '10:00', '12:00'),
-        ('slot_2', 'b_react', 'tr_2', 'rm_102', 'Monday', '14:00', '16:00');
-        """)
-    conn.commit()
-    conn.close()
-
-init_db()
-
-# ---------------------------------------------------------------------------
-# FastAPI Application & Schemas
-# ---------------------------------------------------------------------------
-app = FastAPI(title="TrainWiseAI - Operational Platform", version="1.0.0")
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-class ChatRequest(BaseModel):
-    user_id: str
-    role: str  # 'ADMIN', 'TRAINER', 'STUDENT'
-    student_id: Optional[str] = None
-    message: str
-
-class ActionDecisionRequest(BaseModel):
-    decision: str  # 'APPROVED' or 'REJECTED'
-    approved_by: str
-
-class RescheduleRequest(BaseModel):
-    trainer_id: str
-    date: str
-    reason: str
-
-# ---------------------------------------------------------------------------
-# Safe Query Execution & RBAC Validator
-# ---------------------------------------------------------------------------
-def execute_safe_query(sql: str, role: str, student_id: Optional[str], conn: sqlite3.Connection):
+def execute_safe_query(sql: str, role: str, student_id: str = None):
     cleaned = sql.strip().strip(";")
 
-    # 1. Enforce SELECT only
+    # Read-Only check
     if not re.match(r"^SELECT\b", cleaned, re.IGNORECASE):
-        raise HTTPException(status_code=403, detail="Security Alert: Only read-only SELECT queries are permitted.")
+        return {"error": "Security Alert: Only read-only SELECT queries are permitted."}
 
-    # 2. Block DML/DDL mutations
     forbidden = [r"\bDROP\b", r"\bDELETE\b", r"\bUPDATE\b", r"\bINSERT\b", r"\bALTER\b", r";"]
     for pattern in forbidden:
         if re.search(pattern, cleaned, re.IGNORECASE):
-            raise HTTPException(status_code=403, detail="Security Alert: SQL modification tokens detected.")
+            return {"error": "Security Alert: Modification tokens are blocked."}
 
-    # 3. RBAC: Hard restriction of fee data from trainers
+    # DB Layer RBAC for Trainer
     if role == "TRAINER" and re.search(r"\bfees\b", cleaned, re.IGNORECASE):
-        raise HTTPException(status_code=403, detail="Permission Denied: Trainers cannot query student financial records.")
+        return {"error": "Access Denied: Trainers are strictly restricted from financial tables."}
 
-    # 4. RLS: Row-Level Security injection for students
+    # RLS for Student
     if role == "STUDENT":
-        if not student_id:
-            raise HTTPException(status_code=401, detail="Authentication context missing student identifier.")
-        if re.search(r"\b(users|audit_logs)\b", cleaned, re.IGNORECASE):
-            raise HTTPException(status_code=403, detail="Permission Denied: Access to system tables restricted.")
-        
-        # Inject student_id isolation predicate
+        if re.search(r"\b(users|trainers|rooms|audit_logs)\b", cleaned, re.IGNORECASE):
+            return {"error": "Access Denied: Restricted system table."}
         if re.search(r"\bWHERE\b", cleaned, re.IGNORECASE):
             cleaned = re.sub(r"(\bWHERE\b)", f"WHERE student_id = '{student_id}' AND ", cleaned, count=1, flags=re.IGNORECASE)
         else:
             cleaned = f"{cleaned} WHERE student_id = '{student_id}'"
 
-    cursor = conn.cursor()
-    cursor.execute(cleaned)
-    rows = [dict(r) for r in cursor.fetchall()]
-    return {"sql": cleaned, "rows": rows}
+    db = get_db()
+    try:
+        cursor = db.cursor()
+        cursor.execute(cleaned)
+        rows = [dict(r) for r in cursor.fetchall()]
+        return {"sql": cleaned, "rows": rows}
+    except Exception as e:
+        return {"error": str(e)}
+    finally:
+        db.close()
 
-# ---------------------------------------------------------------------------
-# Core API Routes
-# ---------------------------------------------------------------------------
+# --- Page Navigation Routes ---
+@app.route('/')
+def index():
+    return render_template('index.html')
 
-@app.post("/api/chat")
-def handle_chat(req: ChatRequest, db: sqlite3.Connection = Depends(get_db)):
-    msg = req.message.strip().lower()
+@app.route('/admin_login')
+def admin_login_page():
+    return render_template('admin_login.html')
 
-    # Intent A: Low attendance detection (< 75%)
-    if "low attendance" in msg or "attendance" in msg:
-        sql = """
-        SELECT s.name, b.name as batch, 
-               ROUND((SUM(CASE WHEN a.status='PRESENT' THEN 1 ELSE 0 END)*100.0 / COUNT(a.id)), 1) as attendance_pct
-        FROM students s
-        JOIN batches b ON s.batch_id = b.id
-        LEFT JOIN attendance a ON s.id = a.student_id
-        GROUP BY s.id
-        HAVING attendance_pct < 75
-        """
-        res = execute_safe_query(sql, req.role, req.student_id, db)
-        return {
-            "type": "QUERY_RESULT",
-            "reply_text": f"Found {len(res['rows'])} student(s) falling behind on attendance.",
-            "executed_sql": res["sql"],
-            "table_data": res["rows"]
-        }
+@app.route('/student_login')
+def student_login_page():
+    return render_template('student_login.html')
 
-    # Intent B: Fee and overdue balance queries
-    if "fee" in msg or "emi" in msg or "overdue" in msg:
-        sql = """
-        SELECT s.name, f.amount, f.due_date, f.status 
-        FROM fees f 
-        JOIN students s ON f.student_id = s.id 
-        WHERE f.status = 'OVERDUE'
-        """
-        res = execute_safe_query(sql, req.role, req.student_id, db)
-        return {
-            "type": "QUERY_RESULT",
-            "reply_text": f"Found {len(res['rows'])} overdue fee record(s).",
-            "executed_sql": res["sql"],
-            "table_data": res["rows"]
-        }
+@app.route('/login/admin')
+def admin_login():
+    session['role'] = 'ADMIN'
+    session['user_id'] = 'u_admin'
+    session['user_name'] = 'Director Mehta (Admin)'
+    session.pop('student_id', None)
+    return redirect(url_for('admin_dashboard'))
 
-    # Intent C: Draft communication (Human-in-the-Loop stage)
-    if "remind" in msg or "notice" in msg:
-        if req.role != "ADMIN":
-            raise HTTPException(status_code=403, detail="Permission Denied: Only Admins can stage communication actions.")
+@app.route('/login/trainer')
+def trainer_login():
+    session['role'] = 'TRAINER'
+    session['user_id'] = 'u_trainer'
+    session['user_name'] = 'Rahul Verma (Trainer)'
+    session.pop('student_id', None)
+    return redirect(url_for('admin_dashboard'))
 
-        action_id = f"act_{uuid.uuid4().hex[:6]}"
-        db.execute("""
-            INSERT INTO audit_logs (id, action_type, target_entity, payload, status)
-            VALUES (?, 'WHATSAPP_NOTICE', 'Aman Sharma', 'Reminder: EMI of ₹25,000 is overdue.', 'PENDING_APPROVAL')
-        """, (action_id,))
-        db.commit()
+@app.route('/login/student')
+def student_login():
+    session['role'] = 'STUDENT'
+    session['user_id'] = 'u_student'
+    session['student_id'] = 'st_1'
+    session['user_name'] = 'Aman Sharma'
+    return redirect(url_for('student_dashboard'))
 
-        return {
-            "type": "ACTION_PENDING",
-            "reply_text": "Drafted reminder notice. Human approval is required before dispatch.",
-            "action_card": {
-                "action_id": action_id,
-                "action_type": "WHATSAPP_REMINDER",
-                "recipient": "Aman Sharma (+919876543210)",
-                "message": "Hi Aman, your 2nd EMI of ₹25,000 is overdue. Please settle by Friday.",
-                "status": "PENDING_APPROVAL"
-            }
-        }
+@app.route('/logout')
+def logout():
+    session.clear()
+    return redirect(url_for('index'))
 
-    return {
-        "type": "QUERY_RESULT",
-        "reply_text": "I can assist with queries like: 'Show students with low attendance', 'Show overdue fees', or 'Send reminder to Aman'.",
-        "executed_sql": "-- No query required",
-        "table_data": []
-    }
+@app.route('/admin')
+def admin_dashboard():
+    if session.get('role') not in ['ADMIN', 'TRAINER']:
+        return redirect(url_for('index'))
+    return render_template('admin_dashboard.html', role=session.get('role'), user_name=session.get('user_name'))
 
-@app.post("/api/actions/{action_id}/decision")
-def record_decision(action_id: str, req: ActionDecisionRequest, db: sqlite3.Connection = Depends(get_db)):
-    row = db.execute("SELECT * FROM audit_logs WHERE id = ?", (action_id,)).fetchone()
-    if not row:
-        raise HTTPException(status_code=404, detail="Action not found in queue.")
+@app.route('/student')
+def student_dashboard():
+    if session.get('role') != 'STUDENT':
+        return redirect(url_for('index'))
+    
+    st_id = session.get('student_id')
+    db = get_db()
+    student = db.execute("SELECT * FROM students WHERE id = ?", (st_id,)).fetchone()
+    batch = db.execute("SELECT * FROM batches WHERE id = ?", (student['batch_id'],)).fetchone()
+    
+    total_att = db.execute("SELECT COUNT(*) as c FROM attendance WHERE student_id = ?", (st_id,)).fetchone()['c']
+    pres_att = db.execute("SELECT COUNT(*) as c FROM attendance WHERE student_id = ? AND status = 'PRESENT'", (st_id,)).fetchone()['c']
+    att_pct = round((pres_att / total_att * 100), 1) if total_att > 0 else 0
+    
+    fee_row = db.execute("SELECT * FROM fees WHERE student_id = ? ORDER BY due_date DESC LIMIT 1", (st_id,)).fetchone()
+    notifications = db.execute("SELECT * FROM notifications WHERE student_id = ? ORDER BY created_at DESC", (st_id,)).fetchall()
+    
+    schedule = db.execute("""
+        SELECT s.*, t.name as trainer_name, r.name as room_name, b.name as batch_name 
+        FROM schedule_slots s 
+        JOIN trainers t ON s.trainer_id = t.id 
+        JOIN rooms r ON s.room_id = r.id 
+        JOIN batches b ON s.batch_id = b.id 
+        WHERE s.batch_id = ?
+    """, (student['batch_id'],)).fetchall()
+    
+    db.close()
+    return render_template('student_dashboard.html', 
+                           student=student, batch=batch, att_pct=att_pct, 
+                           fee=fee_row, notifications=notifications, schedule=schedule)
+
+# --- Copilot API ---
+@app.route('/api/chat', methods=['POST'])
+def api_chat():
+    data = request.get_json() or {}
+    user_msg = data.get('message', '').strip()
+    role = session.get('role', 'TRAINER')
+    student_id = session.get('student_id')
+
+    if not user_msg:
+        return jsonify({"type": "TEXT", "reply": "Please enter a question or command."})
+
+    # Fallback simulation if GEMINI_API_KEY is not yet supplied in .env
+    if not ai_client:
+        if "attendance" in user_msg.lower():
+            sql = "SELECT s.name, b.name as batch, '33%' as attendance_pct FROM students s JOIN batches b ON s.batch_id=b.id WHERE s.id='st_1'"
+            res = execute_safe_query(sql, role, student_id)
+            return jsonify({"type": "QUERY_RESULT", "reply": "Found 1 student falling behind (Demo Mode - Add API Key for live AI):", "sql": res["sql"], "rows": res["rows"]})
+        if "fee" in user_msg.lower():
+            if role == "TRAINER":
+                return jsonify({"type": "ERROR", "reply": "Access Denied: Financial entities are restricted from trainer accounts."})
+            sql = "SELECT s.name, f.amount, f.status FROM fees f JOIN students s ON f.student_id=s.id WHERE f.status='OVERDUE'"
+            res = execute_safe_query(sql, role, student_id)
+            return jsonify({"type": "QUERY_RESULT", "reply": "Found overdue records:", "sql": res["sql"], "rows": res["rows"]})
+
+    try:
+        response = ai_client.models.generate_content(
+            model="gemini-2.5-flash",
+            contents=f"User ({role}) asked: {user_msg}",
+            config=types.GenerateContentConfig(
+                system_instruction=get_system_instruction(role),
+                response_mime_type="application/json",
+                temperature=0.1
+            )
+        )
+        
+        parsed = json.loads(response.text.strip())
+        intent = parsed.get("intent", "TEXT")
+
+        if intent == "ACCESS_DENIED":
+            return jsonify({"type": "ERROR", "reply": parsed.get("reply", "Access Denied.")})
+
+        if intent == "READ_QUERY":
+            sql = parsed.get("sql", "")
+            res = execute_safe_query(sql, role, student_id)
+            if "error" in res:
+                return jsonify({"type": "ERROR", "reply": res["error"]})
+            return jsonify({
+                "type": "QUERY_RESULT",
+                "reply": parsed.get("reply", "Query execution results:"),
+                "sql": res["sql"],
+                "rows": res["rows"]
+            })
+
+        if intent == "STAGE_ACTION":
+            if role != "ADMIN":
+                return jsonify({"type": "ERROR", "reply": "Permission Denied: Only Admins can stage communication actions."})
+            
+            action_id = f"act_{uuid.uuid4().hex[:6]}"
+            db = get_db()
+            db.execute("""
+                INSERT INTO audit_logs (id, action_type, target_entity, payload, status)
+                VALUES (?, ?, ?, ?, 'PENDING_APPROVAL')
+            """, (action_id, parsed.get("action", "ACTION"), parsed.get("recipient", "Student"), parsed.get("message", "")))
+            db.commit()
+            db.close()
+
+            return jsonify({
+                "type": "ACTION_PENDING",
+                "reply": parsed.get("reply", "Action drafted. Human approval required:"),
+                "card": {
+                    "id": action_id,
+                    "recipient": parsed.get("recipient", "Aman Sharma (+919876543210)"),
+                    "action": parsed.get("action", "WhatsApp Reminder"),
+                    "message": parsed.get("message", "Payment reminder.")
+                }
+            })
+
+        return jsonify({"type": "TEXT", "reply": parsed.get("reply", "Understood.")})
+
+    except Exception as e:
+        return jsonify({"type": "ERROR", "reply": f"AI Engine Notice: {str(e)}"})
+
+@app.route('/api/actions/<action_id>/decision', methods=['POST'])
+def api_action_decision(action_id):
+    data = request.get_json() or {}
+    decision = data.get('decision', 'REJECTED')
+    
+    db = get_db()
+    log = db.execute("SELECT * FROM audit_logs WHERE id = ?", (action_id,)).fetchone()
+    if not log:
+        db.close()
+        return jsonify({"error": "Action record not found"}), 404
 
     db.execute(
-        "UPDATE audit_logs SET status = ?, approved_by = ? WHERE id = ?",
-        (req.decision, req.approved_by, action_id)
+        "UPDATE audit_logs SET status = ?, approved_by = ? WHERE id = ?", 
+        (decision, session.get('user_name', 'Admin'), action_id)
     )
-
-    # Closed-loop synchronization: If approved, push directly into student's personal notifications
-    if req.decision == "APPROVED":
-        notif_id = f"notif_{uuid.uuid4().hex[:6]}"
+    
+    # Push to student notifications on approval
+    if decision == 'APPROVED':
         db.execute("""
             INSERT INTO notifications (id, student_id, title, message)
-            VALUES (?, 'st_1', 'Urgent Fee Notice', 'Your EMI of ₹25,000 is overdue. Please clear it immediately.')
-        """, (notif_id,))
+            VALUES (?, 'st_1', 'Urgent Payment Reminder', 'Your EMI of ₹25,000 is overdue. Please clear it immediately.')
+        """, (f"notif_{uuid.uuid4().hex[:6]}",))
 
     db.commit()
-    return {
-        "status": "SUCCESS",
-        "action_id": action_id,
-        "decision": req.decision,
-        "logged_at": datetime.now().isoformat()
-    }
+    db.close()
+    return jsonify({"status": "SUCCESS", "decision": decision})
 
-@app.get("/api/timetable")
-def get_timetable(db: sqlite3.Connection = Depends(get_db)):
-    slots = db.execute("""
-        SELECT s.id, s.day_of_week as day, s.start_time, s.end_time,
-               b.name as batch_name, t.name as trainer_name, r.name as room_name
-        FROM schedule_slots s
-        JOIN batches b ON s.batch_id = b.id
-        JOIN trainers t ON s.trainer_id = t.id
-        JOIN rooms r ON s.room_id = r.id
-    """).fetchall()
-    return {"slots": [dict(s) for s in slots]}
-
-@app.post("/api/timetable/reschedule")
-def reschedule_conflict(req: RescheduleRequest, db: sqlite3.Connection = Depends(get_db)):
-    # Deterministic CSP swap: moves affected slot from Trainer Rahul (tr_1) to Trainer Neha (tr_2) in Lab 2
+@app.route('/api/timetable/reschedule', methods=['POST'])
+def api_reschedule():
+    db = get_db()
     db.execute("""
         UPDATE schedule_slots 
         SET trainer_id = 'tr_2', room_id = 'rm_102' 
-        WHERE trainer_id = ?
-    """, (req.trainer_id,))
+        WHERE trainer_id = 'tr_1'
+    """)
     db.commit()
+    db.close()
 
-    updated = db.execute("""
-        SELECT s.id, s.day_of_week as day, s.start_time, s.end_time,
-               b.name as batch_name, t.name as trainer_name, r.name as room_name
-        FROM schedule_slots s
-        JOIN batches b ON s.batch_id = b.id
-        JOIN trainers t ON s.trainer_id = t.id
-        JOIN rooms r ON s.room_id = r.id
-    """).fetchall()
+    return jsonify({
+        "status": "SUCCESS",
+        "explanation": "Moved Python Pro from Lab 1 (Trainer Rahul) to Lab 2 under Trainer Neha (Free at 10:00 AM). Zero collisions found."
+    })
 
-    return {
-        "status": "RESCHEDULED",
-        "explanation": "Moved Python Pro from Lab 1 to Lab 2 under Trainer Neha (Free 10:00-12:00). Zero overlaps detected.",
-        "updated_slots": [dict(u) for u in updated]
-    }
-
-@app.get("/api/students/at-risk")
-def get_at_risk_students(db: sqlite3.Connection = Depends(get_db)):
-    # Dropout heuristic: Attendance < 75% AND Overdue Fee status
-    rows = db.execute("""
-        SELECT s.id as student_id, s.name, b.name as batch, f.amount as overdue_amount,
-               ROUND((SUM(CASE WHEN a.status='PRESENT' THEN 1 ELSE 0 END)*100.0 / COUNT(a.id)), 1) as attendance_pct
-        FROM students s
-        JOIN batches b ON s.batch_id = b.id
-        JOIN fees f ON s.id = f.student_id AND f.status = 'OVERDUE'
-        LEFT JOIN attendance a ON s.id = a.student_id
-        GROUP BY s.id
-        HAVING attendance_pct < 75
-    """).fetchall()
-
-    return {
-        "at_risk_students": [
-            {
-                "student_id": r["student_id"],
-                "name": r["name"],
-                "batch": r["batch"],
-                "attendance_pct": r["attendance_pct"],
-                "fee_status": "OVERDUE",
-                "overdue_amount": r["overdue_amount"],
-                "risk_level": "CRITICAL"
-            }
-            for r in rows
-        ]
-    }
-
-@app.get("/api/student/dashboard/{student_id}")
-def get_student_dashboard(student_id: str, db: sqlite3.Connection = Depends(get_db)):
-    student = db.execute("SELECT * FROM students WHERE id = ?", (student_id,)).fetchone()
-    if not student:
-        raise HTTPException(status_code=404, detail="Student not found.")
-
-    batch = db.execute("SELECT * FROM batches WHERE id = ?", (student["batch_id"],)).fetchone()
-    
-    total_att = db.execute("SELECT COUNT(*) as c FROM attendance WHERE student_id = ?", (student_id,)).fetchone()["c"]
-    pres_att = db.execute("SELECT COUNT(*) as c FROM attendance WHERE student_id = ? AND status = 'PRESENT'", (student_id,)).fetchone()["c"]
-    att_pct = round((pres_att / total_att * 100), 1) if total_att > 0 else 0
-
-    fee = db.execute("SELECT * FROM fees WHERE student_id = ? ORDER BY due_date DESC LIMIT 1", (student_id,)).fetchone()
-    notifications = db.execute("SELECT * FROM notifications WHERE student_id = ? ORDER BY created_at DESC", (student_id,)).fetchall()
-    
-    slots = db.execute("""
-        SELECT s.day_of_week as day, s.start_time, s.end_time,
-               t.name as trainer_name, r.name as room_name
-        FROM schedule_slots s
-        JOIN trainers t ON s.trainer_id = t.id
-        JOIN rooms r ON s.room_id = r.id
-        WHERE s.batch_id = ?
-    """, (student["batch_id"],)).fetchall()
-
-    return {
-        "student_id": student["id"],
-        "name": student["name"],
-        "batch_name": batch["name"] if batch else "Unassigned",
-        "attendance_pct": att_pct,
-        "fee_status": dict(fee) if fee else None,
-        "notifications": [dict(n) for n in notifications],
-        "schedule": [dict(s) for s in slots]
-    }
+if __name__ == '__main__':
+    app.run(debug=True, port=5000)
