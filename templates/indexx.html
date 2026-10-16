@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TrainWiseAI - Operations Platform</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="center-layout">
+    <div class="card landing-card">
+        <h1>TrainWise<span class="highlight">AI</span></h1>
+        <p class="subtitle">AI Training Operations Platform with Hardened RBAC, Human-in-the-Loop Actions & Deterministic Scheduling</p>
+        
+        <div class="login-grid">
+            <a href="/login/admin" class="btn btn-primary role-card">
+                <h3>👑 Director / Admin Login</h3>
+                <p>Full permissions: Copilot Queries, Financial Data, Action Staging Approval, Master Timetable Re-planning</p>
+            </a>
+            <a href="/login/trainer" class="btn btn-secondary role-card">
+                <h3>👨‍🏫 Trainer Login</h3>
+                <p>Restricted permissions: Timetables, Attendance. Hard-blocked from all fee and payment data.</p>
+            </a>
+            <a href="/login/student" class="btn btn-accent role-card">
+                <h3>🎓 Student Login (Aman Sharma)</h3>
+                <p>Row-Level Isolated view: Personal Attendance, EMIs, Live Notifications & Batch Schedule.</p>
+            </a>
+        </div>
+        
+        <div class="demo-links">
+            <a href="/admin_login">Direct Staff Login Form</a> • <a href="/student_login">Direct Student Login Form</a>
+        </div>
+    </div>
+</body>
+</html>
