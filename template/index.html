@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>OpsPilot — Institute operations, in control</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <script defer src="{{ url_for('static', filename='script.js') }}"></script>
+</head>
+<body class="landing">
+<header class="topbar">
+  <a class="brand" href="/"><span class="brand-mark">O</span> OpsPilot</a>
+  <nav><a href="#about">About</a><a href="#features">Features</a><a href="#how">How it works</a></nav>
+  <a class="button button-dark button-small" href="/admin_login">Log in <span>↗</span></a>
+</header>
+<main>
+  <section class="hero wrap">
+    <div class="hero-copy">
+      <div class="eyebrow"><span class="pulse"></span> THE TRAINING OPERATIONS COPILOT</div>
+      <h1>Run your institute<br>with <em>clarity.</em></h1>
+      <p class="hero-lede">Attendance, schedules, student progress and everyday decisions—together in one intelligent workspace.</p>
+      <div class="hero-actions">
+        <a class="button button-dark" href="/admin_login">Explore as admin <span>↗</span></a>
+        <a class="button button-light" href="/student_login">Student portal <span>→</span></a>
+      </div>
+      <p class="prototype-note">A live, role-aware prototype for training teams.</p>
+    </div>
+    <div class="hero-art">
+      <div class="orbit orbit-one"></div><div class="orbit orbit-two"></div><div class="hero-glow"></div>
+      <div class="hero-panel">
+        <div class="panel-top">
+          <span class="tiny-brand"><span class="brand-mark small">O</span> OpsPilot</span>
+          <span class="live-label"><i></i> LIVE OVERVIEW</span>
+        </div>
+        <div class="panel-title">Good morning, Director <span>✦</span></div>
+        <div class="panel-sub">Your institute at a glance</div>
+        <div class="metric-row">
+          <div class="metric"><span>Students</span><b>248</b><small class="green">↑ 12 this month</small></div>
+          <div class="metric"><span>Attendance</span><b>92.4<small>%</small></b><small>Across 8 batches</small></div>
+        </div>
+        <div class="chart-head"><span>Weekly attendance</span><span class="chart-tag">THIS WEEK⌄</span></div>
+        <div class="bars">
+          <i style="height:43%"></i><i style="height:60%"></i><i style="height:52%"></i>
+          <i style="height:76%"></i><i style="height:66%"></i><i style="height:91%"></i><i style="height:80%"></i>
+        </div>
+        <div class="days"><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span></div>
+        <div class="copilot-toast">
+          <span class="spark-icon">✳</span>
+          <span><b>OpsPilot insight</b><small>3 students may need an attendance check-in.</small></span>
+          <span class="toast-arrow">↗</span>
+        </div>
+      </div>
+      <div class="float-chip chip-top"><span>✦</span> Your day, in sync</div>
+      <div class="float-chip chip-bottom"><span class="avatar-stack">AM</span> One workspace. Every role.</div>
+    </div>
+  </section>
+
+  <section class="trust-strip">
+    <div class="wrap trust-inner">
+      <span>BUILT FOR THE PEOPLE BEHIND</span><b>Better learning operations</b>
+      <span class="trust-divider"></span><span>ADMIN <b>·</b> TRAINER <b>·</b> STUDENT</span>
+    </div>
+  </section>
+
+  <section class="section wrap" id="about">
+    <div class="section-head">
+      <div><div class="eyebrow">LESS ADMIN. MORE MOMENTUM.</div><h2>Everything moving.<br><em>Nothing missed.</em></h2></div>
+      <p>OpsPilot brings the daily rhythm of your institute into focus—from the classroom floor to the director’s desk.</p>
+    </div>
+    <div class="role-cards">
+      <a class="role-card admin-card" href="/admin_login">
+        <div class="role-top"><span class="role-icon">▦</span><span class="card-link">↗</span></div>
+        <div class="role-label">FOR INSTITUTE LEADERS</div><h3>Admin workspace</h3>
+        <p>See the whole operation, ask questions in plain language, and review actions before they happen.</p>
+        <span class="role-cta">Enter admin portal <b>→</b></span>
+      </a>
+      <a class="role-card student-card" href="/student_login">
+        <div class="role-top"><span class="role-icon">✳</span><span class="card-link">↗</span></div>
+        <div class="role-label">FOR LEARNERS</div><h3>Student portal</h3>
+        <p>Stay on top of your attendance, upcoming sessions, course details and important updates.</p>
+        <span class="role-cta">Enter student portal <b>→</b></span>
+      </a>
+    </div>
+  </section>
+
+  <section class="features-band" id="features">
+    <div class="wrap">
+      <div class="eyebrow">ONE CLEAR VIEW OF YOUR INSTITUTE</div>
+      <div class="feature-grid">
+        <article><span class="feature-icon">⌁</span><h3>Ask your operations</h3><p>Get answers about attendance, schedules and student progress in natural language.</p></article>
+        <article><span class="feature-icon">◷</span><h3>Keep sessions on track</h3><p>Make schedule changes with a clear view of trainers, rooms and batch activity.</p></article>
+        <article><span class="feature-icon">◎</span><h3>Protect every role</h3><p>Role-aware access keeps sensitive information in the right hands.</p></article>
+        <article><span class="feature-icon">✓</span><h3>Human-led actions</h3><p>Review and approve drafted reminders before they reach your students.</p></article>
+      </div>
+    </div>
+  </section>
+
+  <section class="section wrap how-section" id="how">
+    <div class="how-copy">
+      <div class="eyebrow">SIMPLE BY DESIGN</div>
+      <h2>From question<br>to <em>clear next step.</em></h2>
+      <p>OpsPilot turns the information your team already has into a calmer way to run each day.</p>
+      <a class="text-link" href="/admin_login">Take a look inside <b>→</b></a>
+    </div>
+    <div class="steps">
+      <div class="step"><span>01</span><div><h3>Choose your workspace</h3><p>Sign in as an admin, trainer or student to see what matters to your role.</p></div></div>
+      <div class="step"><span>02</span><div><h3>Get a useful picture</h3><p>Review schedules, attendance, key records and institute updates in one place.</p></div></div>
+      <div class="step"><span>03</span><div><h3>Move forward with confidence</h3><p>Ask the copilot for insights. Human approval stays in the loop for actions.</p></div></div>
+    </div>
+  </section>
+</main>
+<footer class="footer">
+  <div class="wrap footer-inner">
+    <a class="brand" href="/"><span class="brand-mark">O</span> OpsPilot</a>
+    <span>Training operations, thoughtfully connected.</span>
+    <div><a href="#features">Features</a><a href="/admin_login">Admin login</a><a href="/student_login">Student login</a></div>
+    <small>© 2026 OpsPilot · Prototype experience</small>
+  </div>
+</footer>
+</body>
+</html>

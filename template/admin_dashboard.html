@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Operations overview — OpsPilot</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <script defer src="{{ url_for('static', filename='script.js') }}"></script>
+</head>
+<body class="app-page" data-role="{{ role }}">
+<aside class="sidebar" id="sidebar">
+  <a class="brand" href="/"><span class="brand-mark">O</span> OpsPilot</a>
+  <div class="side-label">WORKSPACE</div>
+  <a class="side-link active" href="#overview">▦ <span>Overview</span></a>
+  <a class="side-link" href="#students">♙ <span>Students</span></a>
+  <a class="side-link" href="#schedule">◷ <span>Schedule</span></a>
+  <a class="side-link" href="#insights">⌁ <span>Copilot insights</span><i class="side-dot"></i></a>
+  <div class="side-label side-label-lower">MANAGE</div>
+  <a class="side-link" href="#students">◎ <span>Batches</span></a>
+  <a class="side-link" href="#students">◇ <span>Trainers</span></a>
+  <div class="sidebar-bottom">
+    <div class="help-card"><span>✳</span><b>Need a hand?</b><small>Ask OpsPilot about your institute.</small><a href="#copilot">Open copilot →</a></div>
+    <a class="side-link" href="/logout">↪ <span>Log out</span></a>
+  </div>
+</aside>
+
+<main class="dashboard-main">
+  <header class="dash-top">
+    <button class="mobile-menu" data-menu aria-label="Open navigation">☰</button>
+    <div class="crumb">Workspace <span>/</span> <b>Overview</b></div>
+    <div class="top-controls">
+      <label class="global-search">⌕ <input placeholder="Search anything..." data-table-search></label>
+      <button class="icon-button" aria-label="Notifications">♧<i></i></button>
+      <div class="profile-chip">
+        <span class="profile-avatar">DM</span>
+        <span><b>{{ user_name or 'Director Mehta' }}</b><small>{{ role|title }} workspace</small></span>
+        <span>⌄</span>
+      </div>
+    </div>
+  </header>
+
+  <div class="dashboard-content" id="overview">
+    <div class="dash-heading">
+      <div>
+        <div class="eyebrow">THURSDAY, OCTOBER 16, 2026 <span class="green">· SYSTEMS LOOK GOOD</span></div>
+        <h1>Good morning, {{ (user_name or 'Director Mehta').split(' ')[0] }} <span>✦</span></h1>
+        <p>Here’s what’s happening across your institute today.</p>
+      </div>
+      <button class="button button-dark" data-scroll-copilot>✳ Ask OpsPilot <span>↗</span></button>
+    </div>
+
+    <section class="stats-grid">
+      <article class="stat-card"><div class="stat-card-head">ENROLLED STUDENTS <span>♙</span></div><b>248</b><small class="stat-foot"><em>↗ 5.1%</em> vs. last month</small><div class="sparkline">⌁</div></article>
+      <article class="stat-card"><div class="stat-card-head">TODAY’S ATTENDANCE <span>◷</span></div><b>92.4<small>%</small></b><small class="stat-foot"><em>↗ 2.3%</em> vs. last week</small><div class="sparkline teal">⌁</div></article>
+      <article class="stat-card"><div class="stat-card-head">ACTIVE BATCHES <span>▤</span></div><b>08</b><small class="stat-foot">Across 4 learning tracks</small><div class="sparkline orange">⌁</div></article>
+      <article class="stat-card"><div class="stat-card-head">NEEDS A LOOK <span>◎</span></div><b>03</b><small class="stat-foot">Attendance check-ins suggested</small><div class="stat-card-alert">!</div></article>
+    </section>
+
+    <section class="dashboard-grid">
+      <article class="surface attendance-card" id="insights">
+        <div class="surface-head">
+          <div><h2>Attendance overview</h2><p>Institute-wide attendance across this week</p></div>
+          <select aria-label="Attendance period"><option>This week</option><option>This month</option></select>
+        </div>
+        <div class="chart-legend"><span><i></i> Attendance</span><span class="legend-note">Average <b>92.4%</b></span></div>
+        <div class="line-chart">
+          <div class="chart-y"><span>100%</span><span>75%</span><span>50%</span><span>25%</span></div>
+          <svg viewBox="0 0 700 190" preserveAspectRatio="none" role="img" aria-label="Attendance rises through the week">
+            <defs><linearGradient id="fill" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#147c69" stop-opacity=".17"/><stop offset="1" stop-color="#147c69" stop-opacity="0"/></linearGradient></defs>
+            <path class="chart-area" d="M0 112 C50 100 60 87 105 92 S165 110 210 79 S270 65 315 82 S370 90 420 53 S475 60 525 41 S585 70 630 35 S675 42 700 24 L700 190 L0 190Z"/>
+            <path class="chart-line" d="M0 112 C50 100 60 87 105 92 S165 110 210 79 S270 65 315 82 S370 90 420 53 S475 60 525 41 S585 70 630 35 S675 42 700 24"/>
+          </svg>
+          <div class="chart-days"><span>Mon 12</span><span>Tue 13</span><span>Wed 14</span><span>Thu 15</span><span>Fri 16</span><span>Sat 17</span><span>Sun 18</span></div>
+        </div>
+      </article>
+
+      <article class="surface copilot-card" id="copilot">
+        <div class="copilot-head"><span class="copilot-icon">✳</span><div><h2>Ask OpsPilot</h2><p>Your operational copilot</p></div><span class="live-pill">READY</span></div>
+        <div class="chat-messages" data-chat>
+          <div class="bot-message"><span class="bot-avatar">✳</span><div>Hi {{ (user_name or 'there').split(' ')[0] }}. I can help with attendance, schedules and institute records. What would you like to know?</div></div>
+        </div>
+        <div class="suggestion-row">
+          <button data-prompt="Show attendance">Attendance</button>
+          <button data-prompt="Show overdue fees">Overdue fees</button>
+          <button data-prompt="Check schedule">Schedule</button>
+        </div>
+        <form class="chat-form" data-chat-form><input name="message" placeholder="Ask about your institute..." aria-label="Ask OpsPilot"><button aria-label="Send message">↑</button></form>
+        <small class="copilot-caption">Read-only answers · Actions require your review</small>
+      </article>
+    </section>
+
+    <section class="dashboard-grid lower-grid">
+      <article class="surface records-card" id="students">
+        <div class="surface-head"><div><h2>Student watchlist</h2><p>Students who may benefit from a check-in</p></div><button class="subtle-button">View all →</button></div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>STUDENT</th><th>BATCH</th><th>ATTENDANCE</th><th>STATUS</th><th></th></tr></thead>
+            <tbody>
+              <tr><td><span class="table-person"><span class="mini-avatar mauve">AS</span><span><b>Aman Sharma</b><small>ST-001</small></span></span></td><td>Python Pro</td><td><b class="red-text">68%</b></td><td><span class="badge badge-warn">Check in</span></td><td><button class="row-action" data-row="Aman Sharma">•••</button></td></tr>
+              <tr><td><span class="table-person"><span class="mini-avatar blue">PK</span><span><b>Priya Kapoor</b><small>ST-014</small></span></span></td><td>UI/UX Design</td><td><b>74%</b></td><td><span class="badge badge-neutral">Monitor</span></td><td><button class="row-action" data-row="Priya Kapoor">•••</button></td></tr>
+              <tr><td><span class="table-person"><span class="mini-avatar gold">RV</span><span><b>Rohan Verma</b><small>ST-028</small></span></span></td><td>Data Analytics</td><td><b>78%</b></td><td><span class="badge badge-neutral">Monitor</span></td><td><button class="row-action" data-row="Rohan Verma">•••</button></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </article>
+
+      <article class="surface schedule-card" id="schedule">
+        <div class="surface-head"><div><h2>Today’s sessions</h2><p>Thursday · 16 October</p></div><a class="subtle-button" href="#schedule">Full schedule →</a></div>
+        <div class="session"><time>09:00<small>AM</small></time><span class="session-bar"></span><div><b>Python Pro</b><small>Rahul Verma · Lab 1</small></div><span class="badge badge-live">LIVE</span></div>
+        <div class="session"><time>11:30<small>AM</small></time><span class="session-bar aqua"></span><div><b>UI/UX Design</b><small>Neha Shah · Studio 2</small></div><span class="badge badge-soon">UP NEXT</span></div>
+        <div class="session"><time>02:00<small>PM</small></time><span class="session-bar amber"></span><div><b>Data Analytics</b><small>Arjun Patel · Lab 3</small></div><span class="badge badge-neutral">LATER</span></div>
+        <button class="reschedule-button" data-reschedule>✧ Suggest a conflict-free reschedule</button>
+      </article>
+    </section>
+    <footer class="dash-footer">OpsPilot · Training operations workspace <span>Prototype mode · Review suggested actions before approving</span></footer>
+  </div>
+</main>
+<div class="toast-region" aria-live="polite"></div>
+</body>
+</html>

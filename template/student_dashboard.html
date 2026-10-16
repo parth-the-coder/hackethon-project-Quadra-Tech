@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Your learning space — OpsPilot</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <script defer src="{{ url_for('static', filename='script.js') }}"></script>
+</head>
+<body class="app-page student-app">
+<aside class="sidebar student-sidebar" id="sidebar">
+  <a class="brand" href="/"><span class="brand-mark">O</span> OpsPilot</a>
+  <div class="side-label">YOUR SPACE</div>
+  <a class="side-link active" href="#welcome">▦ <span>My overview</span></a>
+  <a class="side-link" href="#schedule">◷ <span>My schedule</span></a>
+  <a class="side-link" href="#progress">↗ <span>My progress</span></a>
+  <a class="side-link" href="#updates">✳ <span>Updates</span><i class="side-dot"></i></a>
+  <div class="sidebar-bottom">
+    <div class="student-side-profile">
+      <span class="profile-avatar">{{ (student.name or 'AS')[:1] }}{{ student.name.split(' ')[-1][:1] if student.name and ' ' in student.name else '' }}</span>
+      <span><b>{{ student.name }}</b><small>{{ batch.name }}</small></span>
+    </div>
+    <a class="side-link" href="/logout">↪ <span>Log out</span></a>
+  </div>
+</aside>
+
+<main class="dashboard-main">
+  <header class="dash-top">
+    <button class="mobile-menu" data-menu aria-label="Open navigation">☰</button>
+    <div class="crumb">My space <span>/</span> <b>Overview</b></div>
+    <div class="top-controls">
+      <span class="today-label">THURSDAY, OCTOBER 16</span>
+      <button class="icon-button" aria-label="Updates">♧<i></i></button>
+      <div class="profile-chip">
+        <span class="profile-avatar">{{ student.name[:1] }}{{ student.name.split(' ')[-1][:1] if ' ' in student.name else '' }}</span>
+        <span><b>{{ student.name }}</b><small>{{ batch.name }}</small></span><span>⌄</span>
+      </div>
+    </div>
+  </header>
+
+  <div class="dashboard-content" id="welcome">
+    <div class="student-welcome">
+      <div><div class="eyebrow">YOUR LEARNING SPACE</div><h1>Hi, {{ student.name.split(' ')[0] }} <span>✦</span></h1><p>Keep your momentum going. Here’s your learning snapshot.</p></div>
+      <div class="welcome-date">{{ batch.course }} <span>·</span> {{ batch.name }}</div>
+    </div>
+
+    <section class="student-stats">
+      <article class="student-stat-card progress-main" id="progress">
+        <span class="student-stat-label">ATTENDANCE</span>
+        <div class="progress-layout">
+          <div class="progress-ring" style="--progress: {{ att_pct }}%"><span>{{ att_pct }}<small>%</small></span></div>
+          <div><b>Nice consistency</b><p>Your attendance is looking good. Keep showing up!</p><small class="green">Institute goal: 85%</small></div>
+        </div>
+      </article>
+      <article class="student-stat-card">
+        <span class="student-stat-label">YOUR BATCH</span><span class="student-icon-box">▤</span>
+        <b class="student-stat-value">{{ batch.name }}</b><p>{{ batch.course }}</p>
+        <div class="student-stat-foot">Enrolled learner <span>↗</span></div>
+      </article>
+      <article class="student-stat-card">
+        <span class="student-stat-label">LATEST FEE STATUS</span><span class="student-icon-box coin">₹</span>
+        <b class="student-stat-value">{{ fee.status if fee else 'All clear' }}</b>
+        <p>{% if fee %}₹{{ '{:,.0f}'.format(fee.amount) }} · Due {{ fee.due_date }}{% else %}No pending fee updates{% endif %}</p>
+        <div class="student-stat-foot">Account overview <span>→</span></div>
+      </article>
+    </section>
+
+    <section class="dashboard-grid student-grid">
+      <article class="surface" id="schedule">
+        <div class="surface-head"><div><h2>Your weekly schedule</h2><p>Sessions coming up for {{ batch.name }}</p></div><span class="schedule-icon">◷</span></div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>DAY</th><th>TIME</th><th>SESSION</th><th>TRAINER</th><th>LOCATION</th></tr></thead>
+            <tbody>
+              {% for slot in schedule %}
+              <tr><td><b>{{ slot.day_of_week }}</b></td><td>{{ slot.start_time }}</td><td><b>{{ batch.course }}</b></td><td>{{ slot.trainer_name }}</td><td>{{ slot.room_name }}</td></tr>
+              {% else %}
+              <tr><td colspan="5" class="empty-cell">Your sessions will appear here.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </article>
+
+      <article class="surface updates-card" id="updates">
+        <div class="surface-head"><div><h2>Latest updates</h2><p>Important notes from your institute</p></div><span class="unread-dot"></span></div>
+        {% for note in notifications[:3] %}
+        <div class="update-item"><span class="update-icon">✳</span><div><b>{{ note.title }}</b><p>{{ note.message }}</p><small>Institute update</small></div></div>
+        {% else %}
+        <div class="update-item"><span class="update-icon">✦</span><div><b>You’re all caught up</b><p>New announcements and reminders will appear here.</p><small>Just now</small></div></div>
+        {% endfor %}
+      </article>
+    </section>
+
+    <section class="student-nudge">
+      <span class="nudge-star">✳</span>
+      <div><b>Small steps make real progress.</b><p>Stay consistent with your sessions and ask your trainer if you need support.</p></div>
+      <a href="#schedule">View your schedule →</a>
+    </section>
+    <footer class="dash-footer">OpsPilot · Your learning space <span>Need help? Reach out to your institute administrator.</span></footer>
+  </div>
+</main>
+<div class="toast-region" aria-live="polite"></div>
+</body>
+</html>
