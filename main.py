@@ -399,19 +399,24 @@ def api_chat():
     if not user_msg:
         return jsonify({"type": "TEXT", "reply": "I'm listening! What can I help you with?"})
 
-    # 1. Primary AI Route: Google Gemini 2.5 Flash
+
+    # 1. Primary AI Route: Google Gemini
     if ai_client:
         try:
-            response = ai_client.models.generate_content(
-                model="gemini-2.5-flash",
-                contents=f"User: {user_msg}",
-                config=types.GenerateContentConfig(
-                    system_instruction=get_system_prompt(user_role, user_name, student_id),
-                    response_mime_type="application/json",
-                    temperature=0.2
-                )
+            response = ai_client.interactions.create(
+                model="gemini-3.8-flash",
+                input=f"User: {user_msg}",
+                system_instruction=get_system_prompt(
+                    user_role, user_name, student_id
+                ),
+                response_format={
+                    "type": "text",
+                    "mime_type": "application/json"
+                },
             )
-            parsed = json.loads(response.text.strip())
+
+            parsed = json.loads(response.output_text.strip())
+
             intent = parsed.get("intent", "CHAT")
             reply = parsed.get("reply", "Processed.")
 
