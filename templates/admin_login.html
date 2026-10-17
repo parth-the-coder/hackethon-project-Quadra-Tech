@@ -3,70 +3,89 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Admin sign in — OpsPilot</title>
+  <title>Admin & Trainer Sign In — OpsPilot</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
   <script defer src="{{ url_for('static', filename='script.js') }}"></script>
 </head>
 <body class="auth-page">
-<a class="brand auth-brand" href="/"><span class="brand-mark">O</span> OpsPilot</a>
-<main class="auth-layout">
-  <section class="auth-aside">
-    <div class="aside-content">
-      <div class="eyebrow">INSTITUTE OPERATIONS, IN SYNC</div>
-      <h1>See the whole<br>picture. <em>Lead well.</em></h1>
-      <p>Your institute’s key operations, together in one clear workspace.</p>
-      <div class="aside-stat">
-        <span class="stat-icon">✦</span>
-        <span><b>One calm view of the day</b><small>Attendance · schedules · student activity</small></span>
-      </div>
+<a class="brand auth-brand" href="/" style="position: absolute; top: 28px; left: 36px; z-index: 10;">
+  <span class="brand-mark">O</span> OpsPilot
+</a>
+
+<main class="auth-layout" style="display: grid; grid-template-columns: 1.1fr 1fr; min-height: 100vh;">
+  <!-- Left Visual Column with Campus Overlay -->
+  <section style="position: relative; overflow: hidden; display: flex; flex-direction: column; justify-content: flex-end; padding: 60px 48px; color: #fff;">
+    <div style="position: absolute; inset: 0; background-image: url('https://images.unsplash.com/photo-1531482615713-2afd69097998?auto=format&fit=crop&w=1200&q=80'); background-size: cover; background-position: center; filter: brightness(0.35);"></div>
+    <div style="position: relative; z-index: 2; max-width: 480px;">
+      <span class="badge badge-live" style="background: rgba(13, 148, 136, 0.35); color: #5eead4; border-color: rgba(94, 234, 212, 0.4); margin-bottom: 14px; display: inline-block;">
+        EXECUTIVE WORKSPACE
+      </span>
+      <h1 style="font-size: 34px; margin: 0 0 12px; color: #ffffff; line-height: 1.15;">
+        Lead your learning operations with clarity.
+      </h1>
+      <p style="color: #cbd5e1; font-size: 14px; margin: 0; line-height: 1.6;">
+        Full-week schedule management, dynamic student onboarding, live attendance calculations, and autonomous operational intelligence.
+      </p>
     </div>
-    <div class="aside-foot">A thoughtful workspace for training teams.</div>
   </section>
 
-  <section class="auth-main">
-    <div class="auth-card">
-      <a class="back-link" href="/">← Back to home</a>
-      <div class="auth-symbol">▦</div>
-      <div class="eyebrow">ADMIN & TRAINER ACCESS</div>
-      <h2>Welcome back</h2>
-      <p class="auth-intro">Sign in to your operations workspace.</p>
+  <!-- Right Form Column -->
+  <section style="display: grid; place-items: center; padding: 40px 30px; background: var(--paper);">
+    <div style="width: min(420px, 100%); background: #ffffff; padding: 36px; border-radius: 20px; border: 1px solid var(--line); box-shadow: var(--shadow-md);">
+      <a href="/" style="font-size: 12px; color: var(--muted); font-weight: 600;">← Back to Home</a>
+      <h2 style="font-size: 24px; margin: 18px 0 6px;">Sign in to Workspace</h2>
+      <p style="color: var(--muted); font-size: 13px; margin-bottom: 20px;">Role-aware access for administrators and trainers.</p>
 
       {% if error %}
-      <div style="background: rgba(239, 68, 68, 0.15); border: 1px solid #ef4444; color: #fca5a5; padding: 10px 14px; border-radius: 8px; font-size: 0.85rem; margin-bottom: 1rem;">
+      <div style="background: var(--red-soft); border: 1px solid #fca5a5; color: var(--red); padding: 10px 14px; border-radius: 8px; font-size: 12px; margin-bottom: 16px;">
         {{ error }}
       </div>
       {% endif %}
 
-      <div class="demo-notice">
-        <b>Quick Pitch Access:</b>
-        <span>Admin: <code>admin@trainwise.com</code> / <code>admin123</code></span>
+      <!-- Quick Auto-Fill Demo Tags -->
+      <div style="background: #f8fafc; border: 1px solid var(--line); border-left: 4px solid var(--green); padding: 12px 14px; border-radius: 0 10px 10px 0; margin-bottom: 20px;">
+        <span style="font-size: 11px; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 6px;">
+          ⚡ Quick Demo Auto-Fill:
+        </span>
+        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+          <button type="button" class="button button-small button-light" style="padding: 4px 10px; font-size: 11px;" onclick="fillCredentials('admin@trainwise.com', 'admin123')">
+            👑 Admin (Director)
+          </button>
+          <button type="button" class="button button-small button-light" style="padding: 4px 10px; font-size: 11px;" onclick="fillCredentials('rahul@trainwise.com', 'trainer123')">
+            👨‍🏫 Trainer (Rahul)
+          </button>
+        </div>
       </div>
 
-      <form class="auth-form" method="POST" action="/admin_login">
-        <label for="identity">Email or username</label>
-        <input id="identity" name="email" autocomplete="username" placeholder="admin@trainwise.com" required value="admin@trainwise.com">
-        
-        <label for="password">Password</label>
-        <div class="password-wrap" style="position: relative;">
-          <input id="password" name="password" type="password" autocomplete="current-password" placeholder="Enter password" required minlength="4" value="admin123" style="width: 100%;">
-          <button class="password-toggle" type="button" aria-label="Show password">Show</button>
+      <form method="POST" action="/admin_login" style="display: grid; gap: 14px;">
+        <div>
+          <label style="font-size: 11px; text-transform: uppercase; font-weight: 800; color: var(--muted); display: block; margin-bottom: 5px;">
+            Email or Username
+          </label>
+          <input id="admin_email" name="email" class="input-field" placeholder="admin@trainwise.com" value="admin@trainwise.com" required>
         </div>
-
-        <div class="form-options">
-          <label class="check-label"><input type="checkbox" checked> Remember me</label>
-          <a href="#" data-forgot>Forgot password?</a>
+        <div>
+          <label style="font-size: 11px; text-transform: uppercase; font-weight: 800; color: var(--muted); display: block; margin-bottom: 5px;">
+            Password
+          </label>
+          <div style="position: relative;">
+            <input id="admin_pass" name="password" type="password" class="input-field" value="admin123" required style="padding-right: 50px;">
+            <button class="password-toggle" type="button" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); font-size: 11px; color: var(--muted); font-weight: 700;">Show</button>
+          </div>
         </div>
-
-        <button class="button button-dark auth-submit" type="submit">Continue as admin <span>→</span></button>
+        <button type="submit" class="button button-dark" style="width: 100%; height: 44px; margin-top: 6px;">
+          Continue to Workspace →
+        </button>
       </form>
-
-      <div class="trainer-option" style="margin-top: 1.5rem;">
-        <span>Presenting as a trainer?</span>
-        <a href="/login/trainer">Enter trainer demo (RBAC active) →</a>
-      </div>
-      <div class="auth-foot">Your role determines which institute information you can access.</div>
     </div>
   </section>
 </main>
+
+<script>
+function fillCredentials(email, pass) {
+  document.getElementById('admin_email').value = email;
+  document.getElementById('admin_pass').value = pass;
+}
+</script>
 </body>
 </html>

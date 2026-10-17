@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Students Directory & Onboarding — OpsPilot</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <script defer src="{{ url_for('static', filename='script.js') }}"></script>
+</head>
+<body class="app-page" data-role="{{ role }}">
+<aside class="sidebar">
+  <a class="brand" href="/"><span class="brand-mark">O</span> OpsPilot</a>
+  <div class="side-label">WORKSPACE</div>
+  <a class="side-link" href="/admin">▦ <span>Overview</span></a>
+  <a class="side-link active" href="/admin/students">♙ <span>Students Directory</span></a>
+  <a class="side-link" href="/admin/schedule">◷ <span>Weekly Schedule</span></a>
+  <div class="sidebar-bottom">
+    <div class="user-badge-profile">
+      <span class="user-face-avatar">{% if role == 'ADMIN' %}👑{% else %}👨‍🏫{% endif %}</span>
+      <div>
+        <b>{{ user_name }}</b>
+        <small>{{ role|title }} Console</small>
+      </div>
+    </div>
+    <a class="side-link" href="/logout">↪ <span>Sign out</span></a>
+  </div>
+</aside>
+
+<main class="dashboard-main">
+  <header class="dash-top">
+    <div class="crumb">Console <span>/</span> <b>Students Directory</b></div>
+    <div class="top-controls">
+      <div class="profile-chip">
+        <span class="profile-avatar">{% if role == 'ADMIN' %}DM{% else %}RV{% endif %}</span>
+        <span><b>{{ user_name }}</b><small>{{ role|title }} View</small></span>
+      </div>
+      <a href="/logout" class="button button-small button-light">Sign out</a>
+    </div>
+  </header>
+
+  <div class="dashboard-content">
+    <!-- Visual Student Directory Banner -->
+    <div style="position: relative; border-radius: 18px; padding: 28px 32px; overflow: hidden; margin-bottom: 24px; box-shadow: var(--shadow-md); color: #fff;">
+      <div style="position: absolute; inset: 0; background-image: url('https://images.unsplash.com/photo-1524178232363-1fb2b075b655?auto=format&fit=crop&w=1200&q=80'); background-size: cover; background-position: center; filter: brightness(0.35);"></div>
+      <div style="position: relative; z-index: 2;">
+        <span class="badge badge-live" style="background: rgba(13, 148, 136, 0.3); color: #5eead4; border-color: rgba(94, 234, 212, 0.4); margin-bottom: 8px; display: inline-block;">STUDENT REPOSITORY</span>
+        <h1 style="font-size: 26px; margin: 4px 0;">Learner Management & Attendance Ledger</h1>
+        <p style="margin: 0; color: #cbd5e1; font-size: 13px;">Manage real-time attendance marking, enrollment credentials, and tuition ledger statements</p>
+      </div>
+    </div>
+
+    {% if role == 'ADMIN' %}
+    <!-- Admin Student Onboarding Surface -->
+    <section class="surface" style="margin-bottom: 24px; padding: 24px;">
+      <div class="surface-head" style="margin-bottom: 18px;">
+        <div>
+          <h2>Enroll New Student Account</h2>
+          <p>Generates credentials, assigns cohort track, and initializes student fee ledger</p>
+        </div>
+      </div>
+      <form id="enrollStudentForm" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; align-items: end;">
+        <div>
+          <label style="font-size: 11px; text-transform: uppercase; font-weight: 800; color: var(--muted); display: block; margin-bottom: 5px;">Full Name</label>
+          <input type="text" id="new_name" class="input-field" placeholder="e.g. Parth Tellawar" required>
+        </div>
+        <div>
+          <label style="font-size: 11px; text-transform: uppercase; font-weight: 800; color: var(--muted); display: block; margin-bottom: 5px;">Student Login Email</label>
+          <input type="email" id="new_email" class="input-field" placeholder="e.g. parth@trainwise.com" required>
+        </div>
+        <div>
+          <label style="font-size: 11px; text-transform: uppercase; font-weight: 800; color: var(--muted); display: block; margin-bottom: 5px;">Assign Password</label>
+          <input type="password" id="new_pass" class="input-field" placeholder="••••••••" required>
+        </div>
+        <div>
+          <label style="font-size: 11px; text-transform: uppercase; font-weight: 800; color: var(--muted); display: block; margin-bottom: 5px;">Phone Number</label>
+          <input type="text" id="new_phone" class="input-field" placeholder="+91 9876543210" required>
+        </div>
+        <div>
+          <label style="font-size: 11px; text-transform: uppercase; font-weight: 800; color: var(--muted); display: block; margin-bottom: 5px;">Cohort Track</label>
+          <select id="new_batch" class="input-field">
+            <option value="b_py">Python Full Stack</option>
+            <option value="b_react">React Masters</option>
+          </select>
+        </div>
+        <div>
+          <label style="font-size: 11px; text-transform: uppercase; font-weight: 800; color: var(--muted); display: block; margin-bottom: 5px;">Tuition Fee (₹)</label>
+          <input type="number" id="new_fee" class="input-field" value="25000">
+        </div>
+        <button type="submit" class="button button-dark" style="height: 42px;">Create Account ↗</button>
+      </form>
+      <div id="enrollMessage" style="margin-top: 12px; font-size: 13px;"></div>
+    </section>
+    {% endif %}
+
+    <!-- Students Directory Table -->
+    <section class="surface records-card" style="padding: 24px;">
+      <div class="surface-head">
+        <div>
+          <h2>Enrolled Learners Directory</h2>
+          <p>Instant attendance recording and fee status toggles</p>
+        </div>
+        <input placeholder="Search students by name or email..." data-table-search class="input-field" style="width: 280px; height: 38px;">
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>STUDENT</th>
+              <th>COHORT</th>
+              <th>ATTENDANCE RATE</th>
+              <th>FEE STATUS</th>
+              <th>RECORD ATTENDANCE</th>
+              {% if role == 'ADMIN' %}
+              <th>UPDATE FEE</th>
+              {% endif %}
+            </tr>
+          </thead>
+          <tbody>
+            {% for st in students %}
+            <tr>
+              <td>
+                <span class="table-person">
+                  <span class="mini-avatar">🎓</span>
+                  <span><b>{{ st.name }}</b><small>{{ st.email }}</small></span>
+                </span>
+              </td>
+              <td><b>{{ st.batch_name or 'Python Full Stack' }}</b></td>
+              <td>
+                {% set pct = (st.attended_classes / st.total_classes * 100)|round(1) if st.total_classes > 0 else 0.0 %}
+                <b style="color: var(--green);">{{ pct }}%</b> <small style="color: var(--muted);">({{ st.attended_classes }}/{{ st.total_classes }})</small>
+              </td>
+              <td>
+                {% if role == 'ADMIN' %}
+                  <span class="badge {% if st.fee_status == 'PAID' %}badge-live{% else %}badge-warn{% endif %}">
+                    {{ st.fee_status or 'PENDING' }} (₹{{ st.fee_amount or 0 }})
+                  </span>
+                {% else %}
+                  <span class="badge badge-neutral">Confidential (RBAC)</span>
+                {% endif %}
+              </td>
+              <td>
+                <button class="button button-small" style="background:#10b981; color:#fff; padding:5px 12px;" onclick="updateAttendance('{{ st.id }}', 'PRESENT')">✓ Present</button>
+                <button class="button button-small" style="background:#ef4444; color:#fff; padding:5px 12px;" onclick="updateAttendance('{{ st.id }}', 'ABSENT')">✗ Absent</button>
+              </td>
+              {% if role == 'ADMIN' %}
+              <td>
+                <select onchange="updateFeeStatus('{{ st.id }}', this.value)" style="padding: 5px 10px; border-radius: 8px; font-size: 12px; background: #fff; border: 1px solid var(--line);">
+                  <option value="PENDING" {% if st.fee_status == 'PENDING' %}selected{% endif %}>PENDING</option>
+                  <option value="PAID" {% if st.fee_status == 'PAID' %}selected{% endif %}>PAID</option>
+                  <option value="OVERDUE" {% if st.fee_status == 'OVERDUE' %}selected{% endif %}>OVERDUE</option>
+                </select>
+              </td>
+              {% endif %}
+            </tr>
+            {% else %}
+            <tr>
+              <td colspan="6" style="text-align: center; color: var(--muted); padding: 32px;">
+                No students enrolled yet. Use the registration form above to enroll a student.
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</main>
+<div class="toast-region" aria-live="polite"></div>
+
+<script>
+async function updateAttendance(studentId, status) {
+  const res = await fetch(`/api/students/${studentId}/attendance`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ status })
+  });
+  const data = await res.json();
+  showToast(data.message);
+  setTimeout(() => window.location.reload(), 800);
+}
+
+async function updateFeeStatus(studentId, status) {
+  const res = await fetch(`/api/students/${studentId}/fee`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ status })
+  });
+  const data = await res.json();
+  showToast(data.message);
+  setTimeout(() => window.location.reload(), 800);
+}
+</script>
+</body>
+</html>

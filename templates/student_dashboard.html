@@ -8,17 +8,19 @@
   <script defer src="{{ url_for('static', filename='script.js') }}"></script>
 </head>
 <body class="app-page student-app">
-<aside class="sidebar student-sidebar" id="sidebar">
+<aside class="sidebar student-sidebar">
   <a class="brand" href="/"><span class="brand-mark">O</span> OpsPilot</a>
   <div class="side-label">YOUR SPACE</div>
-  <a class="side-link active" href="#welcome">▦ <span>My overview</span></a>
-  <a class="side-link" href="#schedule">◷ <span>My schedule</span></a>
-  <a class="side-link" href="#progress">↗ <span>My progress</span></a>
-  <a class="side-link" href="#updates">✳ <span>Updates</span><i class="side-dot"></i></a>
+  <a class="side-link active" href="/student">▦ <span>My overview</span></a>
+  <a class="side-link" href="/student/schedule">◷ <span>My schedule</span></a>
+  <a class="side-link" href="/student/updates">✳ <span>Updates & Notices</span></a>
   <div class="sidebar-bottom">
-    <div class="student-side-profile">
-      <span class="profile-avatar">{{ (student.name or 'Student')[:2].upper() }}</span>
-      <span><b>{{ student.name or 'Student' }}</b><small>{{ batch.name if batch else 'Assigned Batch' }}</small></span>
+    <div class="user-badge-profile">
+      <span class="user-face-avatar">🎓</span>
+      <div>
+        <b>{{ student.name }}</b>
+        <small>{{ batch.name if batch else 'Student' }}</small>
+      </div>
     </div>
     <a class="side-link" href="/logout">↪ <span>Log out</span></a>
   </div>
@@ -26,38 +28,38 @@
 
 <main class="dashboard-main">
   <header class="dash-top">
-    <button class="mobile-menu" data-menu aria-label="Open navigation">☰</button>
     <div class="crumb">My space <span>/</span> <b>Overview</b></div>
     <div class="top-controls">
       <span class="today-label">ACTIVE SESSION</span>
       <div class="profile-chip">
-        <span class="profile-avatar">{{ (student.name or 'Student')[:2].upper() }}</span>
-        <span><b>{{ student.name or 'Student' }}</b><small>{{ batch.name if batch else 'Active Cohort' }}</small></span>
+        <span class="profile-avatar">🎓</span>
+        <span><b>{{ student.name }}</b><small>{{ batch.name if batch else 'Cohort A' }}</small></span>
       </div>
       <a href="/logout" class="button button-small button-light" style="margin-left: 10px;">Sign out</a>
     </div>
   </header>
 
-  <div class="dashboard-content" id="welcome">
+  <div class="dashboard-content">
     <div class="student-welcome">
       <div>
         <div class="eyebrow">YOUR LEARNING SPACE</div>
-        <h1>Hi, {{ (student.name or 'Learner').split(' ')[0] }} <span>✦</span></h1>
+        <h1>Hi, {{ student.name.split(' ')[0] }} <span>✦</span></h1>
         <p>Keep your momentum going. Here’s your learning snapshot.</p>
       </div>
       <div class="welcome-date">{{ batch.course if batch else 'Software Track' }} <span>·</span> {{ batch.name if batch else 'Cohort A' }}</div>
     </div>
 
+    <!-- Student Stats -->
     <section class="student-stats">
-      <article class="student-stat-card progress-main" id="progress">
+      <article class="student-stat-card progress-main">
         <span class="student-stat-label">ATTENDANCE</span>
         <div class="progress-layout">
-          <div class="progress-ring" style="--progress: {{ att_pct or 0 }}%">
-            <span>{{ att_pct or 0 }}<small>%</small></span>
+          <div class="progress-ring" style="--progress: {{ att_pct }}%">
+            <span>{{ att_pct }}<small>%</small></span>
           </div>
           <div>
             <b>Cohort Standing</b>
-            <p>Your attendance rate across completed sessions.</p>
+            <p>Your verified attendance across completed lectures.</p>
             <small class="green">Institute benchmark: 85%</small>
           </div>
         </div>
@@ -86,89 +88,34 @@
       </article>
     </section>
 
-    <section class="dashboard-grid student-grid">
-      <article class="surface" id="schedule">
-        <div class="surface-head">
-          <div>
-            <h2>Your weekly schedule</h2>
-            <p>Active lectures scheduled for {{ batch.name if batch else 'your batch' }}</p>
-          </div>
-          <span class="schedule-icon">◷</span>
+    <!-- Student Copilot -->
+    <section class="surface copilot-card" style="margin-top: 22px; padding: 22px;">
+      <div class="copilot-head">
+        <span class="copilot-icon">✳</span>
+        <div>
+          <h2>Ask Student Copilot</h2>
+          <p>Personalized queries for your attendance and schedules</p>
         </div>
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>DAY</th>
-                <th>TIME</th>
-                <th>PROGRAM</th>
-                <th>TRAINER</th>
-                <th>LOCATION</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for slot in schedule %}
-              <tr>
-                <td><b>{{ slot.day_of_week }}</b></td>
-                <td>{{ slot.start_time }} - {{ slot.end_time }}</td>
-                <td><b>{{ slot.batch_name or (batch.course if batch else 'Class') }}</b></td>
-                <td>{{ slot.trainer_name }}</td>
-                <td>{{ slot.room_name }}</td>
-              </tr>
-              {% else %}
-              <tr>
-                <td colspan="5" class="empty-cell" style="text-align: center; color: #94a3b8; padding: 20px;">
-                  No scheduled sessions found for your batch.
-                </td>
-              </tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        </div>
-      </article>
-
-      <article class="surface updates-card" id="updates">
-        <div class="surface-head">
-          <div>
-            <h2>Direct Notices & Updates</h2>
-            <p>Verified broadcasts from Administration</p>
-          </div>
-          <span class="unread-dot"></span>
-        </div>
-        {% for note in notifications %}
-        <div class="update-item" style="padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.05);">
-          <span class="update-icon">✳</span>
-          <div>
-            <b>{{ note.title }}</b>
-            <p style="margin: 4px 0; color: #cbd5e1;">{{ note.message }}</p>
-            <small style="color: #64748b;">{{ note.created_at }}</small>
-          </div>
-        </div>
-        {% else %}
-        <div class="update-item">
-          <span class="update-icon">✦</span>
-          <div>
-            <b>You’re all caught up</b>
-            <p>New announcements, schedule adjustments, and payment verifications appear here.</p>
-            <small>Just now</small>
-          </div>
-        </div>
-        {% endfor %}
-      </article>
-    </section>
-
-    <section class="student-nudge">
-      <span class="nudge-star">✳</span>
-      <div>
-        <b>Tenancy Isolation Active</b>
-        <p>Row-Level Security ensures only your personal enrollment, attendance, and fee ledgers are visible.</p>
+        <span class="live-pill">READY</span>
       </div>
-      <a href="#schedule">View schedule →</a>
-    </section>
+      
+      <div class="chat-messages" data-chat style="height: 180px; overflow-y: auto;">
+        <div class="bot-message">
+          <span class="bot-avatar">✳</span>
+          <div>Hi {{ student.name.split(' ')[0] }}! Ask me about your attendance rate or timetable.</div>
+        </div>
+      </div>
 
-    <footer class="dash-footer">
-      OpsPilot · Student Space <span>Need help? Contact institute administration.</span>
-    </footer>
+      <div class="suggestion-row">
+        <button type="button" data-prompt="What is my attendance rate?">My Attendance</button>
+        <button type="button" data-prompt="Show my timetable">My Schedule</button>
+      </div>
+
+      <form class="chat-form" data-chat-form>
+        <input name="message" placeholder="Ask about your sessions or cohort..." aria-label="Ask OpsPilot">
+        <button type="submit" aria-label="Send message">↑</button>
+      </form>
+    </section>
   </div>
 </main>
 <div class="toast-region" aria-live="polite"></div>

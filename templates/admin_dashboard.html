@@ -8,22 +8,19 @@
   <script defer src="{{ url_for('static', filename='script.js') }}"></script>
 </head>
 <body class="app-page" data-role="{{ role }}">
-<aside class="sidebar" id="sidebar">
+<aside class="sidebar">
   <a class="brand" href="/"><span class="brand-mark">O</span> OpsPilot</a>
   <div class="side-label">WORKSPACE</div>
-  <a class="side-link active" href="#overview">▦ <span>Overview</span></a>
-  {% if role == 'ADMIN' %}
-  <a class="side-link" href="#enrollment">➕ <span>Enroll Student</span></a>
-  {% endif %}
-  <a class="side-link" href="#students">♙ <span>Students</span></a>
-  <a class="side-link" href="#schedule">◷ <span>Schedule</span></a>
-  <a class="side-link" href="#copilot">⌁ <span>Copilot</span><i class="side-dot"></i></a>
+  <a class="side-link active" href="/admin">▦ <span>Overview</span></a>
+  <a class="side-link" href="/admin/students">♙ <span>Students Directory</span></a>
+  <a class="side-link" href="/admin/schedule">◷ <span>Active Schedule</span></a>
   <div class="sidebar-bottom">
-    <div class="help-card">
-      <span>✳</span>
-      <b>Need a hand?</b>
-      <small>Ask OpsPilot about your institute.</small>
-      <a href="#copilot">Open copilot →</a>
+    <div class="user-badge-profile">
+      <span class="user-face-avatar">{% if role == 'ADMIN' %}👑{% else %}👨‍🏫{% endif %}</span>
+      <div>
+        <b>{{ user_name }}</b>
+        <small>{{ role|title }} Workspace</small>
+      </div>
     </div>
     <a class="side-link" href="/logout">↪ <span>Log out</span></a>
   </div>
@@ -31,247 +28,131 @@
 
 <main class="dashboard-main">
   <header class="dash-top">
-    <button class="mobile-menu" data-menu aria-label="Open navigation">☰</button>
     <div class="crumb">Workspace <span>/</span> <b>Overview</b></div>
     <div class="top-controls">
       <div class="profile-chip">
-        <span class="profile-avatar">{{ (user_name or 'DM')[:2].upper() }}</span>
-        <span><b>{{ user_name or 'Director Mehta' }}</b><small>{{ role|title }} workspace</small></span>
+        <span class="profile-avatar">{% if role == 'ADMIN' %}DM{% else %}RV{% endif %}</span>
+        <span><b>{{ user_name }}</b><small>{{ role|title }} view</small></span>
       </div>
       <a href="/logout" class="button button-small button-light" style="margin-left: 10px;">Sign out</a>
     </div>
   </header>
 
-  <div class="dashboard-content" id="overview">
+  <div class="dashboard-content">
     <div class="dash-heading">
       <div>
         <div class="eyebrow">SYSTEMS OPERATIONAL <span class="green">· LIVE DATA</span></div>
-        <h1>Good morning, {{ (user_name or 'Director').split(' ')[0] }} <span>✦</span></h1>
-        <p>Live operational oversight and AI decision copilot.</p>
+        <h1>Good morning, {{ user_name.split(' ')[0] }} <span>✦</span></h1>
+        <p>Live operational oversight, real-time analytics, and AI decision copilot.</p>
       </div>
-      <button class="button button-dark" data-scroll-copilot>✳ Ask OpsPilot <span>↗</span></button>
     </div>
 
     <!-- Live Dynamic Metrics Grid -->
     <section class="stats-grid">
       <article class="stat-card">
-        <div class="stat-card-head">ENROLLED STUDENTS <span>♙</span></div>
-        <b>{{ total_students or 0 }}</b>
+        <div class="stat-card-head">ENROLLED LEARNERS <span>♙</span></div>
+        <b>{{ total_students }}</b>
         <small class="stat-foot">Real-time database count</small>
+        <div class="sparkline">⌁</div>
       </article>
       <article class="stat-card">
-        <div class="stat-card-head">TODAY’S ATTENDANCE <span>◷</span></div>
-        <b>{{ avg_attendance or 0 }}<small>%</small></b>
-        <small class="stat-foot">Across active cohorts</small>
+        <div class="stat-card-head">INSTITUTE ATTENDANCE <span>◷</span></div>
+        <b>{{ avg_attendance }}<small>%</small></b>
+        <small class="stat-foot">Computed from live sessions</small>
+        <div class="sparkline teal">⌁</div>
       </article>
       <article class="stat-card">
         <div class="stat-card-head">ACTIVE BATCHES <span>▤</span></div>
-        <b>{{ total_batches or 2 }}</b>
+        <b>{{ total_batches }}</b>
         <small class="stat-foot">Software & Design Tracks</small>
+        <div class="sparkline orange">⌁</div>
       </article>
       <article class="stat-card">
         <div class="stat-card-head">OVERDUE ACCOUNTS <span>◎</span></div>
-        <b>{{ overdue_count or 0 }}</b>
+        <b>{{ overdue_count }}</b>
         <small class="stat-foot">Installments requiring action</small>
+        <div class="stat-card-alert">!</div>
       </article>
     </section>
 
-    <!-- Admin Dynamic Enrollment Section -->
-    {% if role == 'ADMIN' %}
-    <section class="surface" id="enrollment" style="margin-top: 14px; margin-bottom: 14px; padding: 22px;">
-      <div class="surface-head" style="margin-bottom: 16px;">
-        <div>
-          <h2>Enroll New Student</h2>
-          <p>Assign credentials, cohort batch, and fee structure dynamically</p>
-        </div>
-      </div>
-      <form id="enrollStudentForm" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; align-items: end;">
-        <div>
-          <label style="font-size: 0.75rem; text-transform: uppercase; font-weight: 700; color: #72817d; display: block; margin-bottom: 4px;">Full Name</label>
-          <input type="text" id="new_name" class="input-field" placeholder="e.g. Aman Sharma" required>
-        </div>
-        <div>
-          <label style="font-size: 0.75rem; text-transform: uppercase; font-weight: 700; color: #72817d; display: block; margin-bottom: 4px;">Student Login Email</label>
-          <input type="email" id="new_email" class="input-field" placeholder="e.g. aman@trainwise.com" required>
-        </div>
-        <div>
-          <label style="font-size: 0.75rem; text-transform: uppercase; font-weight: 700; color: #72817d; display: block; margin-bottom: 4px;">Assign Password</label>
-          <input type="password" id="new_pass" class="input-field" placeholder="••••••••" required>
-        </div>
-        <div>
-          <label style="font-size: 0.75rem; text-transform: uppercase; font-weight: 700; color: #72817d; display: block; margin-bottom: 4px;">Phone Number</label>
-          <input type="text" id="new_phone" class="input-field" placeholder="+91 9876543210" required>
-        </div>
-        <div>
-          <label style="font-size: 0.75rem; text-transform: uppercase; font-weight: 700; color: #72817d; display: block; margin-bottom: 4px;">Batch Cohort</label>
-          <select id="new_batch" class="input-field">
-            <option value="b_py">Python Full Stack</option>
-            <option value="b_react">React Masters</option>
-          </select>
-        </div>
-        <div>
-          <label style="font-size: 0.75rem; text-transform: uppercase; font-weight: 700; color: #72817d; display: block; margin-bottom: 4px;">Tuition Fee (₹)</label>
-          <input type="number" id="new_fee" class="input-field" value="25000">
-        </div>
-        <button type="submit" class="button button-dark" style="height: 42px;">Create Account ↗</button>
-      </form>
-      <div id="enrollMessage" style="margin-top: 12px; font-size: 0.85rem;"></div>
-    </section>
-    {% endif %}
-
-    <!-- Live Copilot & Dynamic Schedule -->
-    <section class="dashboard-grid">
-      <article class="surface copilot-card" id="copilot">
-        <div class="copilot-head">
-          <span class="copilot-icon">✳</span>
-          <div>
-            <h2>Ask OpsPilot</h2>
-            <p>Role-Aware Operational Intelligence</p>
-          </div>
-          <span class="live-pill">READY</span>
-        </div>
-        
-        <div class="chat-messages" data-chat>
-          <div class="bot-message">
-            <span class="bot-avatar">✳</span>
-            <div>Hi {{ (user_name or 'there').split(' ')[0] }}. Ask me about student attendance, schedules, or pending fee collections.</div>
-          </div>
-        </div>
-
-        <div class="suggestion-row">
-          <button type="button" data-prompt="Show all registered students">Students</button>
-          <button type="button" data-prompt="Show students with overdue fees">Overdue fees</button>
-          <button type="button" data-prompt="Show schedule">Schedule</button>
-        </div>
-
-        <form class="chat-form" data-chat-form>
-          <input name="message" placeholder="Ask about operations or draft a reminder..." aria-label="Ask OpsPilot">
-          <button type="submit" aria-label="Send message">↑</button>
-        </form>
-        <small class="copilot-caption">Read-only data access · Notifications require administrator sign-off</small>
-      </article>
-
-      <article class="surface schedule-card" id="schedule">
-        <div class="surface-head">
-          <div>
-            <h2>Today’s Sessions</h2>
-            <p>Active Classrooms & Labs</p>
-          </div>
-        </div>
-        <div id="scheduleContainer">
-          {% for slot in schedule %}
-          <div class="session">
-            <time>{{ slot.start_time }}</time>
-            <span class="session-bar"></span>
-            <div>
-              <b>{{ slot.batch_name }}</b>
-              <small>{{ slot.trainer_name }} · {{ slot.room_name }}</small>
-            </div>
-            <span class="badge badge-live">ACTIVE</span>
-          </div>
-          {% else %}
-          <p style="padding: 16px; color: #94a3b8;">No scheduled lectures found.</p>
-          {% endfor %}
-        </div>
-        <button class="reschedule-button" data-reschedule>
-          ✧ Suggest a conflict-free reschedule
-        </button>
-      </article>
-    </section>
-
-    <!-- Dynamic Students Directory with Live Admin Update Controls -->
-    <section class="surface records-card" id="students" style="margin-top: 14px;">
+    <!-- Attendance Graph Surface -->
+    <section class="surface" style="margin-top: 18px; padding: 22px;">
       <div class="surface-head">
         <div>
-          <h2>Active Student Management</h2>
-          <p>Add attendance and update tuition fees in real time</p>
+          <h2>Institute Attendance Analytics</h2>
+          <p>Real-time attendance trend across registered cohorts</p>
         </div>
-        <input placeholder="Search students..." data-table-search class="input-field" style="width: 220px; height: 32px;">
+        <div class="chart-legend">
+          <span><i></i> Live Rate: <b>{{ avg_attendance }}%</b></span>
+        </div>
       </div>
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>STUDENT</th>
-              <th>BATCH</th>
-              <th>ATTENDANCE RATE</th>
-              <th>FEE STATUS</th>
-              {% if role == 'ADMIN' %}
-              <th>MANAGE ATTENDANCE</th>
-              <th>UPDATE FEE</th>
-              {% endif %}
-            </tr>
-          </thead>
-          <tbody>
-            {% for st in students %}
-            <tr>
-              <td>
-                <span class="table-person">
-                  <span class="mini-avatar mauve">{{ st.name[:2].upper() }}</span>
-                  <span><b>{{ st.name }}</b><small>{{ st.email }}</small></span>
-                </span>
-              </td>
-              <td>{{ st.batch_name or 'Python Full Stack' }}</td>
-              <td>
-                {% set pct = (st.attended_classes / st.total_classes * 100)|round(1) if st.total_classes > 0 else 100.0 %}
-                <b>{{ pct }}%</b> <small>({{ st.attended_classes }}/{{ st.total_classes }})</small>
-              </td>
-              <td>
-                <span class="badge {% if st.fee_status == 'PAID' %}badge-live{% else %}badge-warn{% endif %}">
-                  {{ st.fee_status or 'PENDING' }} (₹{{ st.fee_amount or 0 }})
-                </span>
-              </td>
-              {% if role == 'ADMIN' %}
-              <td>
-                <button class="button button-small" style="background:#10b981; color:#fff; padding:4px 8px;" onclick="updateAttendance('{{ st.id }}', 'PRESENT')">✓ Present</button>
-                <button class="button button-small" style="background:#ef4444; color:#fff; padding:4px 8px;" onclick="updateAttendance('{{ st.id }}', 'ABSENT')">✗ Absent</button>
-              </td>
-              <td>
-                <select onchange="updateFeeStatus('{{ st.id }}', this.value)" style="padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; background: #fff; border: 1px solid #cbd5e1;">
-                  <option value="PENDING" {% if st.fee_status == 'PENDING' %}selected{% endif %}>PENDING</option>
-                  <option value="PAID" {% if st.fee_status == 'PAID' %}selected{% endif %}>PAID</option>
-                  <option value="OVERDUE" {% if st.fee_status == 'OVERDUE' %}selected{% endif %}>OVERDUE</option>
-                </select>
-              </td>
-              {% endif %}
-            </tr>
-            {% else %}
-            <tr>
-              <td colspan="6" style="text-align: center; color: #94a3b8; padding: 25px;">
-                No students enrolled yet. Use the form above to add a student.
-              </td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
+      
+      <div class="line-chart" style="margin-top: 24px;">
+        <div class="chart-y">
+          <span>100%</span>
+          <span>75%</span>
+          <span>50%</span>
+          <span>25%</span>
+          <span>0%</span>
+        </div>
+
+        {% if total_students == 0 or avg_attendance == 0.0 %}
+        <svg viewBox="0 0 700 160" preserveAspectRatio="none" role="img" style="width:100%; height:140px;">
+          <line x1="0" y1="140" x2="700" y2="140" stroke="#cbd5e1" stroke-width="2" stroke-dasharray="4" />
+          <text x="350" y="80" text-anchor="middle" fill="#94a3b8" font-size="12">No attendance sessions logged yet. Log sessions in Students Directory to plot curve.</text>
+        </svg>
+        {% else %}
+        <svg viewBox="0 0 700 160" preserveAspectRatio="none" role="img" style="width:100%; height:140px;">
+          <defs>
+            <linearGradient id="attGradient" x1="0" x2="0" y1="0" y2="1">
+              <stop offset="0%" stop-color="#137c68" stop-opacity="0.25"/>
+              <stop offset="100%" stop-color="#137c68" stop-opacity="0.0"/>
+            </linearGradient>
+          </defs>
+          <path class="chart-area" d="M0 130 C120 115 200 90 320 60 S520 40 700 25 L700 150 L0 150 Z" fill="url(#attGradient)"/>
+          <path class="chart-line" d="M0 130 C120 115 200 90 320 60 S520 40 700 25" fill="none" stroke="#137c68" stroke-width="3"/>
+          <circle cx="700" cy="25" r="5" fill="#137c68" />
+        </svg>
+        {% endif %}
+
+        <div class="chart-days">
+          <span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span>
+        </div>
       </div>
+    </section>
+
+    <!-- Operational AI Copilot Surface -->
+    <section class="surface copilot-card" style="margin-top: 18px; padding: 22px;">
+      <div class="copilot-head">
+        <span class="copilot-icon">✳</span>
+        <div>
+          <h2>Ask OpsPilot</h2>
+          <p>Role-Aware Operational Intelligence</p>
+        </div>
+        <span class="live-pill">READY</span>
+      </div>
+      
+      <div class="chat-messages" data-chat style="height: 220px; overflow-y: auto;">
+        <div class="bot-message">
+          <span class="bot-avatar">✳</span>
+          <div>Hi {{ user_name.split(' ')[0] }}. Ask me about student attendance, schedules, or pending fee collections.</div>
+        </div>
+      </div>
+
+      <div class="suggestion-row">
+        <button type="button" data-prompt="Show all registered students">Students</button>
+        <button type="button" data-prompt="Show students with overdue fees">Overdue fees</button>
+        <button type="button" data-prompt="Show schedule">Schedule</button>
+      </div>
+
+      <form class="chat-form" data-chat-form>
+        <input name="message" placeholder="Ask about operations or draft a reminder..." aria-label="Ask OpsPilot">
+        <button type="submit" aria-label="Send message">↑</button>
+      </form>
+      <small class="copilot-caption">Read-only data access · Communications require administrator sign-off</small>
     </section>
   </div>
 </main>
 <div class="toast-region" aria-live="polite"></div>
-
-<script>
-async function updateAttendance(studentId, status) {
-  const res = await fetch(`/api/students/${studentId}/attendance`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ status })
-  });
-  const data = await res.json();
-  showToast(data.message);
-  setTimeout(() => window.location.reload(), 800);
-}
-
-async function updateFeeStatus(studentId, status) {
-  const res = await fetch(`/api/students/${studentId}/fee`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ status })
-  });
-  const data = await res.json();
-  showToast(data.message);
-  setTimeout(() => window.location.reload(), 800);
-}
-</script>
 </body>
 </html>

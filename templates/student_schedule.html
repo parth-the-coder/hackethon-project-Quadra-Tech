@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>My Weekly Schedule — OpsPilot</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <script defer src="{{ url_for('static', filename='script.js') }}"></script>
+</head>
+<body class="app-page student-app">
+<aside class="sidebar student-sidebar">
+  <a class="brand" href="/"><span class="brand-mark">O</span> OpsPilot</a>
+  <div class="side-label">LEARNING SPACE</div>
+  <a class="side-link" href="/student">▦ <span>My Overview</span></a>
+  <a class="side-link active" href="/student/schedule">◷ <span>Weekly Schedule</span></a>
+  <a class="side-link" href="/student/updates">✳ <span>Announcements</span></a>
+  <div class="sidebar-bottom">
+    <div class="user-badge-profile">
+      <span class="user-face-avatar">🎓</span>
+      <div>
+        <b>{{ student.name }}</b>
+        <small>{{ batch.name if batch else 'Student' }}</small>
+      </div>
+    </div>
+    <a class="side-link" href="/logout">↪ <span>Sign out</span></a>
+  </div>
+</aside>
+
+<main class="dashboard-main">
+  <header class="dash-top">
+    <div class="crumb">Student Space <span>/</span> <b>Weekly Schedule</b></div>
+    <div class="top-controls">
+      <span class="badge badge-live">{{ batch.name }}</span>
+      <div class="profile-chip">
+        <span class="profile-avatar">🎓</span>
+        <span><b>{{ student.name }}</b><small>Learner</small></span>
+      </div>
+      <a href="/logout" class="button button-small button-light">Sign out</a>
+    </div>
+  </header>
+
+  <div class="dashboard-content">
+    <!-- Visual Student Schedule Banner -->
+    <div style="position: relative; border-radius: 18px; padding: 28px 32px; overflow: hidden; margin-bottom: 24px; box-shadow: var(--shadow-md); color: #fff;">
+      <div style="position: absolute; inset: 0; background-image: url('https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=1200&q=80'); background-size: cover; background-position: center; filter: brightness(0.35);"></div>
+      <div style="position: relative; z-index: 2;">
+        <span class="badge badge-live" style="background: rgba(13, 148, 136, 0.3); color: #5eead4; border-color: rgba(94, 234, 212, 0.4); margin-bottom: 8px; display: inline-block;">MY COHORT TIMETABLE</span>
+        <h1 style="font-size: 26px; margin: 4px 0;">Upcoming Lectures & Practical Labs</h1>
+        <p style="margin: 0; color: #cbd5e1; font-size: 13px;">Classroom allocations for {{ batch.name }} (Monday to Saturday)</p>
+      </div>
+    </div>
+
+    <section class="surface" style="padding: 24px;">
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>DAY</th>
+              <th>TIMING</th>
+              <th>PROGRAM / COURSE</th>
+              <th>TRAINER</th>
+              <th>LAB / ROOM</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for slot in schedule %}
+            <tr>
+              <td><b style="color: var(--green);">{{ slot.day_of_week }}</b></td>
+              <td><b>{{ slot.start_time }}</b> - {{ slot.end_time }}</td>
+              <td><b>{{ batch.course }}</b></td>
+              <td>{{ slot.trainer_name }}</td>
+              <td><span class="badge badge-neutral">{{ slot.room_name }}</span></td>
+            </tr>
+            {% else %}
+            <tr>
+              <td colspan="5" style="text-align: center; color: var(--muted); padding: 30px;">
+                No lecture slots found for your cohort.
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</main>
+<div class="toast-region" aria-live="polite"></div>
+</body>
+</html>
