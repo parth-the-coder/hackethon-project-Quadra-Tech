@@ -13,15 +13,14 @@ from database import get_db, init_db, DB_PATH
 
 load_dotenv()
 
-# --- INITIALIZE FLASK APPLICATION ---
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'opspilot-hackathon-final-key-2026')
 
-# Initialize SQLite database if missing
+# Initialize SQLite database if it does not exist
 if not os.path.exists(DB_PATH):
     init_db()
 
-# Initialize Google Gemini Client
+# Initialize Google Gemini 2.5 Flash Client
 ai_client = None
 gemini_key = os.environ.get("GEMINI_API_KEY", "").strip()
 if gemini_key and not gemini_key.startswith("your_"):
@@ -73,7 +72,7 @@ def get_system_prompt(role: str, user_name: str, student_id: str = None) -> str:
     2. If role is STUDENT:
        - Querying schedule: Use: SELECT s.day_of_week, s.start_time, s.end_time, b.name as cohort, t.name as trainer, r.name as room FROM schedule_slots s JOIN batches b ON s.batch_id=b.id JOIN trainers t ON s.trainer_id=t.id JOIN rooms r ON s.room_id=r.id JOIN students st ON st.batch_id=s.batch_id WHERE st.id='{student_id}'
        - Querying personal attendance: SELECT session_title, date, status FROM attendance WHERE student_id='{student_id}'
-       - Restricted from: fees, users, audit_logs.
+       - Restricted from: fees, users.
     3. If role is ADMIN:
        - MARK ALL ATTENDANCE: Return intent "MARK_ALL_ATTENDANCE" with "status": "PRESENT" or "ABSENT", "batch_name": "<name or ALL>".
        - ENROLL STUDENT: Return intent "ENROLL_STUDENT" with "name", "email", "phone", "batch_name", "fee".
@@ -81,7 +80,7 @@ def get_system_prompt(role: str, user_name: str, student_id: str = None) -> str:
        - READ QUERIES: Return valid SQLite SELECT queries under intent "READ_QUERY".
     4. If role is TRAINER:
        - If asking about fees/finances: Return intent "ACCESS_DENIED".
-    5. CASUAL / GENERAL CONVERSATION (Greetings, advice):
+    5. CASUAL / GENERAL CONVERSATION:
        Return intent "CHAT" with "reply": "<Friendly conversation>".
     """
 
@@ -100,7 +99,7 @@ def execute_safe_query(sql: str, role: str, student_id: str = None) -> dict:
         return {"error": "Access Denied: Trainers are strictly restricted from financial tables."}
 
     if role == "STUDENT":
-        if re.search(r"\b(users|trainers|rooms|audit_logs|fees)\b", cleaned, re.IGNORECASE) and not re.search(r"\bJOIN\b", cleaned, re.IGNORECASE):
+        if re.search(r"\b(users|trainers|rooms|fees)\b", cleaned, re.IGNORECASE) and not re.search(r"\bJOIN\b", cleaned, re.IGNORECASE):
             return {"error": "Access Denied: Restricted system table."}
 
     db = get_db()
@@ -127,12 +126,48 @@ def index():
     db.close()
     return render_template('index.html', total_students=total_students, avg_attendance=avg_att)
 
+@app.route('/admin/register', methods=['GET', 'POST'])
+def admin_register():
+    if request.method == 'GET':
+        return render_template('admin_register.html')
+
+    name = request.form.get('name', '').strip()
+    email = request.form.get('email', '').strip().lower()
+    password = request.form.get('password', '').strip()
+
+    if not name or not email or not password:
+        return render_template('admin_register.html', error="All fields are required.")
+
+    admin_id = f"u_adm_{uuid.uuid4().hex[:6]}"
+    db = get_db()
+    try:
+        db.execute("""
+            INSERT INTO users (id, email, password, role, student_id)
+            VALUES (?, ?, ?, 'ADMIN', NULL)
+        """, (admin_id, email, password))
+        db.commit()
+
+        session['role'] = 'ADMIN'
+        session['user_id'] = admin_id
+        session['user_name'] = name
+        session.pop('student_id', None)
+        return redirect(url_for('admin_dashboard'))
+
+    except sqlite3.IntegrityError:
+        db.rollback()
+        return render_template('admin_register.html', error="An administrator with this email already exists.")
+    except Exception as e:
+        db.rollback()
+        return render_template('admin_register.html', error=f"Database error: {str(e)}")
+    finally:
+        db.close()
+
 @app.route('/admin_login', methods=['GET', 'POST'])
 def admin_login_page():
     if request.method == 'GET':
         return render_template('admin_login.html')
 
-    email = request.form.get('email', '').strip()
+    email = request.form.get('email', '').strip().lower()
     password = request.form.get('password', '').strip()
 
     db = get_db()
@@ -171,7 +206,7 @@ def student_login():
     if request.method == 'GET':
         return render_template('student_login.html')
 
-    email = request.form.get('email', '').strip()
+    email = request.form.get('email', '').strip().lower()
     password = request.form.get('password', '').strip()
 
     db = get_db()
@@ -189,14 +224,14 @@ def student_login():
         session['student_id'] = user['student_id']
         session['user_name'] = user['student_name']
         return redirect(url_for('student_dashboard'))
-    return render_template('student_login.html', error="Invalid Student ID/Email or Password.")
+    return render_template('student_login.html', error="Access denied. Your student account must first be created by an administrator.")
 
 @app.route('/logout')
 def logout():
     session.clear()
     return redirect(url_for('index'))
 
-# ----------------- ADMIN & TRAINER MODULE ROUTES -----------------
+# ----------------- ADMIN DASHBOARD & MODULE ROUTES -----------------
 
 @app.route('/admin')
 @login_required(roles=['ADMIN', 'TRAINER'])
@@ -240,6 +275,7 @@ def admin_students_page():
             s.name, 
             s.email, 
             s.phone, 
+            s.batch_id,
             b.name as batch_name, 
             f.status as fee_status,
             f.amount as fee_amount,
@@ -346,7 +382,7 @@ def student_updates_page():
     db.close()
     return render_template('student_updates.html', student=student, notifications=notifications)
 
-# ----------------- AUTONOMOUS AI COPILOT ROUTE -----------------
+# ----------------- AI COPILOT ROUTE -----------------
 
 @app.route('/api/chat', methods=['POST'])
 def api_chat():
@@ -363,7 +399,7 @@ def api_chat():
     if not user_msg:
         return jsonify({"type": "TEXT", "reply": "I'm listening! What can I help you with?"})
 
-    # 1. PRIMARY AI ROUTE: GEMINI 2.5 FLASH
+    # 1. Primary AI Route: Google Gemini 2.5 Flash
     if ai_client:
         try:
             response = ai_client.models.generate_content(
@@ -416,7 +452,7 @@ def api_chat():
 
             if intent == "ENROLL_STUDENT" and user_role == 'ADMIN':
                 name = parsed.get("name", "New Learner")
-                email = parsed.get("email", f"learner_{uuid.uuid4().hex[:4]}@trainwise.com")
+                email = parsed.get("email", f"learner_{uuid.uuid4().hex[:4]}@trainwise.com").lower()
                 phone = parsed.get("phone", "+91 9876543210")
                 fee = int(parsed.get("fee", 25000))
                 batch_key = 'b_react' if 'react' in parsed.get("batch_name", "").lower() else 'b_py'
@@ -435,7 +471,7 @@ def api_chat():
                 db.close()
                 return jsonify({
                     "type": "SUCCESS_ACTION",
-                    "reply": f"✅ Student Enrolled: {name} ({email}) assigned with default password 'pass123' and fee ₹{fee}."
+                    "reply": f"✅ Student Account Provisioned: {name} ({email}) assigned Student ID {st_new_id} with default password 'pass123' and fee ₹{fee}."
                 })
 
             return jsonify({"type": "TEXT", "reply": reply})
@@ -443,21 +479,19 @@ def api_chat():
         except Exception as e:
             print(f"[COPILOT GEMINI API EXCEPTION]: {e}")
 
-    # 2. DETERMINISTIC CONVERSATIONAL FALLBACK (Zero overlapping queries)
+    # 2. Deterministic Local Fallback Engine
     lower = user_msg.lower()
 
-    # Category A: Greetings
     if lower in ["hi", "hello", "hey", "good morning", "help", "who are you"]:
         return jsonify({
             "type": "TEXT",
             "reply": f"Hello {user_name.split(' ')[0]}! I'm OpsPilot. Ask me about schedules, enrolled students, fee dues, or attendance commands."
         })
 
-    # Category B: Student Directory / Enrolled Students
     if any(k in lower for k in ["student list", "students list", "show students", "all students", "enrolled students", "registered students"]) and "attendance" not in lower and "fee" not in lower:
         db = get_db()
         rows = [dict(r) for r in db.execute("""
-            SELECT s.name as STUDENT_NAME, s.email as EMAIL, s.phone as PHONE, b.name as COHORT
+            SELECT s.id as STUDENT_ID, s.name as STUDENT_NAME, s.email as EMAIL, s.phone as PHONE, b.name as COHORT
             FROM students s
             LEFT JOIN batches b ON s.batch_id = b.id
             ORDER BY s.name ASC
@@ -469,7 +503,6 @@ def api_chat():
             "rows": rows
         })
 
-    # Category C: Fees / Overdue Tuitions / Financials
     if any(k in lower for k in ["fee", "fees", "pay", "due", "overdue", "unpaid", "pending fee", "balance"]):
         if user_role == "TRAINER":
             return jsonify({
@@ -506,7 +539,6 @@ def api_chat():
                 "rows": rows
             })
 
-    # Category D: Attendance Operations & Logs
     if "mark" in lower and any(k in lower for k in ["all", "everyone", "present", "absent"]):
         if user_role not in ['ADMIN', 'TRAINER']:
             return jsonify({"type": "ERROR", "reply": "Only staff members can update attendance records."})
@@ -557,7 +589,6 @@ def api_chat():
                 "rows": rows
             })
 
-    # Category E: Timetable & Lecture Schedule Only
     if any(k in lower for k in ["schedule", "timetable", "class", "classes", "lecture", "week", "when"]):
         db = get_db()
         if user_role == "STUDENT":
@@ -590,7 +621,6 @@ def api_chat():
             "rows": rows
         })
 
-    # Category F: Non-Empty Unmatched Queries
     return jsonify({
         "type": "TEXT",
         "reply": f"I received your inquiry: \"{user_msg}\". You can ask me for the **schedule**, **students list**, **fee dues**, or tell me to **mark all students present**."
@@ -601,9 +631,9 @@ def api_chat():
 @app.route('/api/students/add', methods=['POST'])
 @login_required(roles=['ADMIN'])
 def add_student():
-    data = request.get_json() or {}
+    data = request.get_json(silent=True) or {}
     name = data.get('name', '').strip()
-    email = data.get('email', '').strip()
+    email = data.get('email', '').strip().lower()
     password = data.get('password', '').strip()
     phone = data.get('phone', '').strip()
     batch_id = data.get('batch_id', 'b_py')
@@ -617,25 +647,109 @@ def add_student():
 
     db = get_db()
     try:
-        db.execute("INSERT INTO students (id, name, email, phone, batch_id) VALUES (?, ?, ?, ?, ?)",
-                   (student_id, name, email, phone, batch_id))
-        db.execute("INSERT INTO users (id, email, password, role, student_id) VALUES (?, ?, ?, 'STUDENT', ?)",
-                   (user_id, email, password, student_id))
-        db.execute("INSERT INTO fees (id, student_id, instalment_no, amount, due_date, status) VALUES (?, ?, 1, ?, '2026-11-15', 'PENDING')",
-                   (f"fee_{uuid.uuid4().hex[:6]}", student_id, fee_amount))
-        db.execute("INSERT INTO notifications (id, student_id, title, message) VALUES (?, ?, 'Welcome to TrainWise!', 'Your enrollment is confirmed.')",
-                   (f"notif_{uuid.uuid4().hex[:6]}", student_id))
+        batch = db.execute("SELECT id FROM batches WHERE id = ?", (batch_id,)).fetchone()
+        if not batch:
+            batch_id = 'b_py'
+
+        db.execute("""
+            INSERT INTO students (id, name, email, phone, batch_id) 
+            VALUES (?, ?, ?, ?, ?)
+        """, (student_id, name, email, phone, batch_id))
+
+        db.execute("""
+            INSERT INTO users (id, email, password, role, student_id) 
+            VALUES (?, ?, ?, 'STUDENT', ?)
+        """, (user_id, email, password, student_id))
+
+        db.execute("""
+            INSERT INTO fees (id, student_id, instalment_no, amount, due_date, status) 
+            VALUES (?, ?, 1, ?, '2026-11-15', 'PENDING')
+        """, (f"fee_{uuid.uuid4().hex[:6]}", student_id, fee_amount))
+
+        db.execute("""
+            INSERT INTO notifications (id, student_id, title, message) 
+            VALUES (?, ?, 'Welcome to TrainWise!', 'Your enrollment is confirmed.')
+        """, (f"notif_{uuid.uuid4().hex[:6]}", student_id))
+
         db.commit()
-        return jsonify({"status": "SUCCESS", "message": f"Student '{name}' registered successfully."})
+        return jsonify({
+            "status": "SUCCESS", 
+            "message": f"Student account provisioned for '{name}'. Generated ID: {student_id}"
+        })
+
     except sqlite3.IntegrityError:
-        return jsonify({"status": "ERROR", "message": "Email already registered in system."}), 400
+        db.rollback()
+        return jsonify({"status": "ERROR", "message": f"Email '{email}' is already registered in the system."}), 400
+    except Exception as err:
+        db.rollback()
+        return jsonify({"status": "ERROR", "message": f"Database error: {str(err)}"}), 500
+    finally:
+        db.close()
+
+@app.route('/api/students/<student_id>/update', methods=['POST'])
+@login_required(roles=['ADMIN'])
+def update_student(student_id):
+    data = request.get_json(silent=True) or {}
+    name = data.get('name', '').strip()
+    email = data.get('email', '').strip().lower()
+    phone = data.get('phone', '').strip()
+    batch_id = data.get('batch_id', 'b_py')
+    password = data.get('password', '').strip()
+    fee_amount = int(data.get('fee_amount', 25000))
+    fee_status = data.get('fee_status', 'PENDING').upper()
+
+    if not name or not email:
+        return jsonify({"status": "ERROR", "message": "Name and Email are required."}), 400
+
+    if fee_status not in ['PAID', 'PENDING', 'OVERDUE']:
+        fee_status = 'PENDING'
+
+    db = get_db()
+    try:
+        # 1. Update students profile
+        db.execute("""
+            UPDATE students 
+            SET name = ?, email = ?, phone = ?, batch_id = ?
+            WHERE id = ?
+        """, (name, email, phone, batch_id, student_id))
+
+        # 2. Update user login email and optional password
+        if password:
+            db.execute("""
+                UPDATE users 
+                SET email = ?, password = ?
+                WHERE student_id = ?
+            """, (email, password, student_id))
+        else:
+            db.execute("""
+                UPDATE users 
+                SET email = ?
+                WHERE student_id = ?
+            """, (email, student_id))
+
+        # 3. Update fee amount and manual payment status
+        db.execute("""
+            UPDATE fees 
+            SET amount = ?, status = ?
+            WHERE student_id = ?
+        """, (fee_amount, fee_status, student_id))
+
+        db.commit()
+        return jsonify({"status": "SUCCESS", "message": f"Successfully updated {name}'s details and fee status to {fee_status}."})
+
+    except sqlite3.IntegrityError:
+        db.rollback()
+        return jsonify({"status": "ERROR", "message": f"Email '{email}' is already in use by another account."}), 400
+    except Exception as e:
+        db.rollback()
+        return jsonify({"status": "ERROR", "message": str(e)}), 500
     finally:
         db.close()
 
 @app.route('/api/students/<student_id>/attendance', methods=['POST'])
 @login_required(roles=['ADMIN', 'TRAINER'])
 def mark_attendance(student_id):
-    data = request.get_json() or {}
+    data = request.get_json(silent=True) or {}
     status = data.get('status', 'PRESENT').upper()
     date_val = data.get('date', '2026-10-17')
 
@@ -660,7 +774,7 @@ def mark_attendance(student_id):
 @app.route('/api/students/<student_id>/fee', methods=['POST'])
 @login_required(roles=['ADMIN'])
 def update_student_fee(student_id):
-    data = request.get_json() or {}
+    data = request.get_json(silent=True) or {}
     new_status = data.get('status', 'PAID').upper()
 
     db = get_db()
