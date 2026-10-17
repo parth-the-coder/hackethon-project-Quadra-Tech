@@ -1,151 +1,149 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#12332e">
-  <meta name="description" content="OpsPilot brings training institute attendance, schedules, student progress and operations into one clear workspace.">
-  <title>OpsPilot — Your institute, in sync</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <meta charset="UTF-8">
+  <title>OpsPilot | Autonomous Institute Copilot</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-  <script defer src="{{ url_for('static', filename='script.js') }}"></script>
 </head>
-<body class="landing">
+<body>
   <header class="topbar">
-    <a class="brand" href="{{ url_for('index') }}" aria-label="OpsPilot home">
-      <span class="brand-mark">O</span> OpsPilot
-    </a>
-    <nav aria-label="Main navigation">
-      <a href="#platform">Platform</a>
-      <a href="#features">Features</a>
-      <a href="#how-it-works">How it works</a>
+    <div class="brand">
+      <div class="brand-mark">✦</div>
+      <span>OpsPilot</span>
+    </div>
+    <nav>
+      <a href="#roles">Access Portals</a>
+      <a href="#features">Architecture</a>
+      <a href="/login/admin">Director Console</a>
     </nav>
-    <a class="button button-dark button-small" href="{{ url_for('admin_login_page') }}">Sign in <span aria-hidden="true">↗</span></a>
+    <a href="/admin_login" class="button button-dark">Staff Sign In ↗</a>
   </header>
 
-  <main>
-    <section class="hero wrap" aria-labelledby="hero-title">
+  <main class="wrap">
+    <section class="hero">
       <div class="hero-copy">
-        <div class="eyebrow"><span class="pulse"></span> THE TRAINING OPERATIONS COPILOT</div>
-        <h1 id="hero-title">Your institute,<br><em>in sync.</em></h1>
-        <p class="hero-lede">Bring attendance, schedules, student progress and everyday decisions into one clear workspace.</p>
+        <span class="eyebrow"><span class="pulse"></span> Next-Gen Operations Engine</span>
+        <h1>Autonomous Operations for <em>Training Institutes</em></h1>
+        <p class="hero-lede">
+          OpsPilot eliminates administrative friction with an AI copilot, conflict-free scheduling, and isolated student workspaces.
+        </p>
         <div class="hero-actions">
-          <a class="button button-dark" href="{{ url_for('admin_login_page') }}">Explore the workspace <span aria-hidden="true">↗</span></a>
-          <a class="button button-light" href="{{ url_for('student_login') }}">Student sign in <span aria-hidden="true">→</span></a>
+          <a href="/login/admin" class="button button-dark">Director Mehta (Admin) ↗</a>
+          <a href="/login/trainer" class="button button-light">Rahul Verma (Trainer)</a>
+          <a href="/login/student" class="button button-light">Student Hub</a>
         </div>
-        <p class="prototype-note">A role-aware operations platform for modern training institutes.</p>
-        <div class="hero-proof"><span class="proof-check">✓</span> Admin, trainer and student access <span class="proof-separator">·</span> Human-reviewed actions</div>
+        <div class="demo-quick-access">
+          <span>Direct Persona Access:</span>
+          <a href="/login/admin">Director (Admin)</a> •
+          <a href="/login/trainer">Rahul (Trainer)</a> •
+          <a href="/login/student">Student Login</a>
+        </div>
       </div>
 
-      <div class="hero-art" aria-label="Sample institute activity overview">
-        <div class="orbit orbit-one"></div><div class="orbit orbit-two"></div><div class="hero-glow"></div>
+      <div class="hero-art">
+        <div class="hero-campus-backdrop"></div>
         <div class="hero-panel">
           <div class="panel-top">
-            <span class="tiny-brand"><span class="brand-mark small">O</span> OpsPilot overview</span>
-            <span class="live-label"><i></i> INSTITUTE SNAPSHOT</span>
+            <span class="tiny-brand">OPSPILOT METRICS</span>
+            <span class="live-label">LIVE DATABASE</span>
           </div>
-          <div class="panel-title">A clearer view of today <span>✦</span></div>
-          <div class="panel-sub">A live summary from your institute</div>
+          <div class="panel-title">Operations Status</div>
+          <div class="panel-sub">Real-time stats from SQLite engine</div>
+
           <div class="metric-row">
             <div class="metric">
-              <span>Enrolled students</span>
+              <span>Active Learners</span>
               <b>{{ total_students }}</b>
-              <small>Across your programs</small>
+              <small class="green">Enrolled</small>
             </div>
             <div class="metric">
-              <span>Attendance rate</span>
-              <b>{{ avg_attendance }}<small>%</small></b>
-              <small>Recorded sessions</small>
+              <span>Attendance Rate</span>
+              <b class="green">{{ avg_attendance }}%</b>
+              <small>Verified Logs</small>
             </div>
           </div>
-          <div class="chart-head"><span>Operations, connected</span><span class="chart-tag">OPS PILOT</span></div>
-          <div class="overview-list">
-            <div><span class="overview-icon">◷</span><span><b>Attendance</b><small>Spot patterns and follow up</small></span><span class="overview-arrow">↗</span></div>
-            <div><span class="overview-icon">▤</span><span><b>Schedules</b><small>Keep sessions moving smoothly</small></span><span class="overview-arrow">↗</span></div>
-            <div><span class="overview-icon">✳</span><span><b>AI copilot</b><small>Ask questions in plain language</small></span><span class="overview-arrow">↗</span></div>
+
+          <div class="bars">
+            <i style="height: 60%"></i><i style="height: 85%"></i><i style="height: 70%"></i>
+            <i style="height: 95%"></i><i style="height: 75%"></i><i style="height: 90%"></i>
           </div>
-          <div class="copilot-toast"><span class="spark-icon">✳</span><span><b>Designed around your team</b><small>Useful insight. Clear next steps.</small></span><span class="toast-arrow">↗</span></div>
+          <div class="days">
+            <span>MON</span><span>TUE</span><span>WED</span><span>THU</span><span>FRI</span><span>SAT</span>
+          </div>
+
+          <div class="copilot-toast">
+            <span style="font-size: 20px;">✦</span>
+            <div>
+              <b>Autonomous AI Copilot</b>
+              <small>Ready to manage attendance, fees, and conflict-free schedules</small>
+            </div>
+          </div>
         </div>
-        <div class="float-chip chip-top"><span>✦</span> One connected workspace</div>
-        <div class="float-chip chip-bottom"><span class="avatar-stack">OP</span> Admin · Trainer · Student</div>
-      </div>
-    </section>
-
-    <section class="trust-strip" aria-label="Platform focus">
-      <div class="wrap trust-inner">
-        <span>BUILT FOR TRAINING INSTITUTES</span>
-        <b>Less coordination overhead</b>
-        <span class="trust-divider"></span>
-        <span>ATTENDANCE <b>·</b> SCHEDULES <b>·</b> STUDENT SUCCESS</span>
-      </div>
-    </section>
-
-    <section class="section wrap" id="platform">
-      <div class="section-head">
-        <div>
-          <div class="eyebrow">ONE PLATFORM. EVERY PERSPECTIVE.</div>
-          <h2>Operations that feel<br><em>clear and connected.</em></h2>
-        </div>
-        <p>OpsPilot helps the people who run and attend your programs find the information they need and take the next step with confidence.</p>
-      </div>
-      <div class="role-cards">
-        <a class="role-card admin-card" href="{{ url_for('admin_login_page') }}">
-          <div class="role-top"><span class="role-icon">▦</span><span class="card-link" aria-hidden="true">↗</span></div>
-          <div class="role-label">FOR ADMINS & TRAINERS</div>
-          <h3>Operations workspace</h3>
-          <p>Review institute activity, explore records with the copilot and keep your team’s day on track.</p>
-          <span class="role-cta">Sign in to operations <b aria-hidden="true">→</b></span>
-        </a>
-        <a class="role-card student-card" href="{{ url_for('student_login') }}">
-          <div class="role-top"><span class="role-icon">✳</span><span class="card-link" aria-hidden="true">↗</span></div>
-          <div class="role-label">FOR STUDENTS</div>
-          <h3>Your learning space</h3>
-          <p>Check your progress and fee status, then ask the copilot about your personal schedule.</p>
-          <span class="role-cta">Sign in as a student <b aria-hidden="true">→</b></span>
-        </a>
-      </div>
-    </section>
-
-    <section class="features-band" id="features">
-      <div class="wrap">
-        <div class="eyebrow">BUILT AROUND REAL INSTITUTE WORK</div>
-        <div class="feature-grid">
-          <article><span class="feature-icon">⌁</span><h3>Ask in plain language</h3><p>Get answers about schedules, attendance and student progress through the copilot.</p></article>
-          <article><span class="feature-icon">◷</span><h3>See what needs attention</h3><p>Bring useful operational details together so teams can act sooner.</p></article>
-          <article><span class="feature-icon">◎</span><h3>Respect each role</h3><p>Admins, trainers and students get access designed around their responsibilities.</p></article>
-          <article><span class="feature-icon">✓</span><h3>Keep people in control</h3><p>Use clear actions and review steps while keeping your team accountable.</p></article>
-        </div>
-      </div>
-    </section>
-
-    <section class="section wrap how-section" id="how-it-works">
-      <div class="how-copy">
-        <div class="eyebrow">A SIMPLE WAY TO GET STARTED</div>
-        <h2>Find the signal.<br><em>Take the next step.</em></h2>
-        <p>OpsPilot gives each person a focused workspace, supported by institute data and an operational copilot.</p>
-        <a class="text-link" href="{{ url_for('admin_login_page') }}">Explore OpsPilot <b aria-hidden="true">→</b></a>
-      </div>
-      <div class="steps">
-        <div class="step"><span>01</span><div><h3>Sign in for your role</h3><p>Choose the operations workspace or the student learning space.</p></div></div>
-        <div class="step"><span>02</span><div><h3>Get the right context</h3><p>See institute activity or your personal learning information in one place.</p></div></div>
-        <div class="step"><span>03</span><div><h3>Ask and move forward</h3><p>Use the copilot to find records, understand the situation and take action.</p></div></div>
       </div>
     </section>
   </main>
 
-  <footer class="footer">
-    <div class="wrap footer-inner">
-      <a class="brand" href="{{ url_for('index') }}"><span class="brand-mark">O</span> OpsPilot</a>
-      <span>Training operations, thoughtfully connected.</span>
-      <div>
-        <a href="#features">Features</a>
-        <a href="{{ url_for('admin_login_page') }}">Admin login</a>
-        <a href="{{ url_for('student_login') }}">Student login</a>
-      </div>
-      <small>© 2026 OpsPilot · Training operations platform</small>
+  <div class="trust-strip">
+    <div class="wrap trust-inner">
+      <span>✦ PYTHON & FLASK CORE</span>
+      <span>✦ GOOGLE GEMINI 2.5 FLASH</span>
+      <span>✦ SQLITE AST AUDITED</span>
+      <span>✦ ROLE-BASED ACCESS CONTROL</span>
     </div>
-  </footer>
+  </div>
+
+  <section class="wrap section" id="roles">
+    <div class="section-head">
+      <div>
+        <span class="eyebrow">Role Access</span>
+        <h2>Unified Institute Management</h2>
+      </div>
+    </div>
+
+    <div class="role-cards">
+      <a href="/admin_login" class="role-card admin-card">
+        <div class="role-icon">👨‍💼</div>
+        <h3>Administration & Staff</h3>
+        <p>Access full analytics, financial fee ledgers, automated batch attendance, and timetable reschedulers.</p>
+        <span class="role-cta">Sign In to Admin Workspace ↗</span>
+      </a>
+
+      <a href="/login/student" class="role-card student-card">
+        <div class="role-icon">🎓</div>
+        <h3>Learners Learning Space</h3>
+        <p>Access personalized lecture timetables, personal attendance metrics, and tuition fee history.</p>
+        <span class="role-cta">Sign In to Student Hub ↗</span>
+      </a>
+    </div>
+  </section>
+
+  <section class="features-band" id="features">
+    <div class="wrap">
+      <span class="eyebrow">Enterprise Features</span>
+      <h2>Engineered for High-Performance Education</h2>
+      <div class="feature-grid">
+        <article>
+          <span class="feature-icon">✦</span>
+          <h3>AI Operations Copilot</h3>
+          <p>Execute queries and autonomous actions in natural language via Gemini 2.5 Flash.</p>
+        </article>
+        <article>
+          <span class="feature-icon">⚡</span>
+          <h3>Conflict-Free CSP</h3>
+          <p>Deterministic constraint satisfaction prevents classroom and faculty double-booking.</p>
+        </article>
+        <article>
+          <span class="feature-icon">🛡️</span>
+          <h3>Role-Based Access</h3>
+          <p>Row-level security shields financial records from unauthorized accounts.</p>
+        </article>
+        <article>
+          <span class="feature-icon">📊</span>
+          <h3>Live Operational KPIs</h3>
+          <p>Dynamic calculations update attendance rates and overdue ledgers automatically.</p>
+        </article>
+      </div>
+    </div>
+  </section>
 </body>
 </html>

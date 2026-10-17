@@ -1,113 +1,88 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Weekly Schedule Manager — OpsPilot</title>
+  <meta charset="UTF-8">
+  <title>Timetable Management | OpsPilot</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-  <script defer src="{{ url_for('static', filename='script.js') }}"></script>
 </head>
-<body class="app-page" data-role="{{ role }}">
-<aside class="sidebar">
-  <a class="brand" href="/"><span class="brand-mark">O</span> OpsPilot</a>
-  <div class="side-label">WORKSPACE</div>
-  <a class="side-link" href="/admin">▦ <span>Overview</span></a>
-  <a class="side-link" href="/admin/students">♙ <span>Students Directory</span></a>
-  <a class="side-link active" href="/admin/schedule">◷ <span>Weekly Schedule</span></a>
-  <div class="sidebar-bottom">
-    <div class="user-badge-profile">
-      <span class="user-face-avatar">{% if role == 'ADMIN' %}👑{% else %}👨‍🏫{% endif %}</span>
-      <div>
-        <b>{{ user_name }}</b>
-        <small>{{ role|title }} Console</small>
-      </div>
+<body class="app-page">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark">✦</div>
+      <span>OpsPilot</span>
     </div>
-    <a class="side-link" href="/logout">↪ <span>Sign out</span></a>
-  </div>
-</aside>
+    <div class="side-label">Admin Console</div>
+    <a href="/admin" class="side-link">📊 <span>Overview</span></a>
+    <a href="/admin/students" class="side-link">👥 <span>Learners Directory</span></a>
+    <a href="/admin/schedule" class="side-link active">📅 <span>Institute Timetable</span></a>
 
-<main class="dashboard-main">
-  <header class="dash-top">
-    <div class="crumb">Console <span>/</span> <b>Weekly Schedule</b></div>
-    <div class="top-controls">
-      <div class="profile-chip">
-        <span class="profile-avatar">{% if role == 'ADMIN' %}DM{% else %}RV{% endif %}</span>
-        <span><b>{{ user_name }}</b><small>{{ role|title }} View</small></span>
-      </div>
-      <a href="/logout" class="button button-small button-light">Sign out</a>
-    </div>
-  </header>
-
-  <div class="dashboard-content">
-    <!-- Visual Banner with Unsplash Lab Photography -->
-    <div style="position: relative; border-radius: 18px; padding: 28px 32px; overflow: hidden; margin-bottom: 24px; box-shadow: var(--shadow-md); color: #fff;">
-      <div style="position: absolute; inset: 0; background-image: url('https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&w=1200&q=80'); background-size: cover; background-position: center; filter: brightness(0.35);"></div>
-      <div style="position: relative; z-index: 2; display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 16px;">
+    <div class="sidebar-bottom">
+      <div class="user-badge-profile">
+        <span class="user-face-avatar">👨‍💼</span>
         <div>
-          <span class="badge badge-live" style="background: rgba(13, 148, 136, 0.3); color: #5eead4; border-color: rgba(94, 234, 212, 0.4); margin-bottom: 8px; display: inline-block;">FULL-WEEK DISPATCH</span>
-          <h1 style="font-size: 26px; margin: 4px 0;">Institute Timetable & Room Allocations</h1>
-          <p style="margin: 0; color: #cbd5e1; font-size: 13px;">Manage active classrooms, lab assignments, and multi-cohort sessions (Mon – Sat)</p>
+          <b>{{ user_name }}</b>
+          <small>{{ role }} Mode</small>
         </div>
+      </div>
+      <a href="/logout" class="button button-light button-small" style="width: 100%;">Sign Out</a>
+    </div>
+  </aside>
+
+  <main class="dashboard-main">
+    <header class="dash-top">
+      <div class="crumb">Institute Operations <span>/</span> <b>Timetable & Scheduling Engine</b></div>
+      <div class="top-controls">
         {% if role == 'ADMIN' %}
-        <button class="button button-dark" style="background: rgba(255,255,255,0.92); color: var(--dark);" data-reschedule>
-          ✧ Run Conflict-Free Rescheduler (CSP)
-        </button>
+        <button id="triggerRescheduleBtn" class="button button-dark button-small">⚡ Solve Schedule Collisions</button>
         {% endif %}
       </div>
-    </div>
+    </header>
 
-    <section class="surface" style="padding: 24px;">
-      <div class="surface-head">
+    <div class="dashboard-content">
+      <div class="dash-heading">
         <div>
-          <h2>Filter by Session Day</h2>
-          <p>Display allocations for specific weekdays or review full institute pulse</p>
+          <h1>Master Lecture Schedule</h1>
+          <p>Conflict-free room and trainer allocations governed by CSP constraint solver.</p>
         </div>
       </div>
 
-      <!-- Weekly Day Filter Buttons -->
       <div class="week-filter-bar">
         {% for day in ['All', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'] %}
-        <a href="/admin/schedule?day={{ day }}" class="day-filter-btn {% if selected_day == day %}active{% endif %}">
-          {{ day }}
-        </a>
+        <a href="/admin/schedule?day={{ day }}" class="day-filter-btn {% if selected_day == day %}active{% endif %}">{{ day }}</a>
         {% endfor %}
       </div>
 
-      <div class="table-wrap" style="margin-top: 20px;">
-        <table>
-          <thead>
-            <tr>
-              <th>DAY</th>
-              <th>TIMING</th>
-              <th>BATCH COHORT</th>
-              <th>ASSIGNED TRAINER</th>
-              <th>LOCATION / ROOM</th>
-              <th>STATUS</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for slot in schedule %}
-            <tr>
-              <td><b style="color: var(--green);">{{ slot.day_of_week }}</b></td>
-              <td><b>{{ slot.start_time }}</b> - {{ slot.end_time }}</td>
-              <td><b>{{ slot.batch_name }}</b></td>
-              <td>{{ slot.trainer_name }}</td>
-              <td><span class="badge badge-neutral">{{ slot.room_name }}</span></td>
-              <td><span class="badge badge-live">CONFIRMED</span></td>
-            </tr>
-            {% else %}
-            <tr>
-              <td colspan="6" style="text-align: center; color: var(--muted); padding: 30px;">
-                No lecture slots scheduled for {{ selected_day }}.
-              </td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
+      <div class="surface" style="padding: 24px 28px;">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>DAY</th>
+                <th>TIME WINDOW</th>
+                <th>COHORT</th>
+                <th>ALLOCATED TRAINER</th>
+                <th>LAB ROOM</th>
+                <th>STATUS</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for slot in schedule %}
+              <tr>
+                <td><b>{{ slot.day_of_week }}</b></td>
+                <td><code>{{ slot.start_time }} – {{ slot.end_time }}</code></td>
+                <td><span style="font-weight: 700; color: var(--green);">{{ slot.batch_name }}</span></td>
+                <td>👨‍🏫 {{ slot.trainer_name }}</td>
+                <td>📍 {{ slot.room_name }}</td>
+                <td><span class="badge badge-live">Conflict-Free</span></td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
       </div>
-    </section>
-  </div>
-</main>
-<div class="toast-region" aria-live="polite"></div>
+    </div>
+  </main>
+
+  <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
 </html>

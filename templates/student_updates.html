@@ -1,73 +1,65 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Announcements & Notices — OpsPilot</title>
+  <meta charset="UTF-8">
+  <title>Notices & Updates | OpsPilot</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-  <script defer src="{{ url_for('static', filename='script.js') }}"></script>
 </head>
-<body class="app-page student-app">
-<aside class="sidebar student-sidebar">
-  <a class="brand" href="/"><span class="brand-mark">O</span> OpsPilot</a>
-  <div class="side-label">LEARNING SPACE</div>
-  <a class="side-link" href="/student">▦ <span>My Overview</span></a>
-  <a class="side-link" href="/student/schedule">◷ <span>Weekly Schedule</span></a>
-  <a class="side-link active" href="/student/updates">✳ <span>Announcements</span></a>
-  <div class="sidebar-bottom">
-    <div class="user-badge-profile">
-      <span class="user-face-avatar">🎓</span>
-      <div>
-        <b>{{ student.name }}</b>
-        <small>{{ student.email }}</small>
-      </div>
+<body class="app-page">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark">✦</div>
+      <span>OpsPilot</span>
     </div>
-    <a class="side-link" href="/logout">↪ <span>Sign out</span></a>
-  </div>
-</aside>
+    <div class="side-label">Student Space</div>
+    <a href="/student" class="side-link">🎓 <span>My Overview</span></a>
+    <a href="/student/schedule" class="side-link">📅 <span>My Schedule</span></a>
+    <a href="/student/updates" class="side-link active">🔔 <span>Notices</span></a>
 
-<main class="dashboard-main">
-  <header class="dash-top">
-    <div class="crumb">Student Space <span>/</span> <b>Announcements</b></div>
-    <div class="top-controls">
-      <div class="profile-chip">
-        <span class="profile-avatar">🎓</span>
-        <span><b>{{ student.name }}</b><small>Learner</small></span>
-      </div>
-      <a href="/logout" class="button button-small button-light">Sign out</a>
-    </div>
-  </header>
-
-  <div class="dashboard-content">
-    <section class="surface" style="padding: 28px;">
-      <div class="surface-head" style="margin-bottom: 20px;">
+    <div class="sidebar-bottom">
+      <div class="user-badge-profile">
+        <span class="user-face-avatar">🎓</span>
         <div>
-          <h2>Verified Institute Broadcasts</h2>
-          <p>Official notices and schedule adjustments from the administration</p>
+          <b>{{ student.name }}</b>
+          <small>{{ student.email }}</small>
+        </div>
+      </div>
+      <a href="/logout" class="button button-light button-small" style="width: 100%;">Sign Out</a>
+    </div>
+  </aside>
+
+  <main class="dashboard-main">
+    <header class="dash-top">
+      <div class="crumb">Student Hub <span>/</span> <b>Official Notices</b></div>
+      <div class="top-controls">
+        <span class="badge badge-neutral">Archived Broadcasts</span>
+      </div>
+    </header>
+
+    <div class="dashboard-content">
+      <div class="dash-heading">
+        <div>
+          <h1>Institute Broadcasts & Ledger Alerts</h1>
+          <p>Official communications delivered to your account.</p>
         </div>
       </div>
 
-      <div style="display: flex; flex-direction: column; gap: 14px;">
-        {% for note in notifications %}
-        <div style="background: #ffffff; border: 1px solid var(--line); border-radius: 12px; padding: 18px 20px; box-shadow: var(--shadow-sm); border-left: 4px solid var(--green);">
-          <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 6px;">
-            <span style="color: var(--green); font-size: 16px;">✦</span>
-            <b style="font-size: 14px; color: var(--ink);">{{ note.title }}</b>
-            <small style="margin-left: auto; color: var(--muted); font-size: 11px;">{{ note.created_at }}</small>
+      <div style="display: flex; flex-direction: column; gap: 16px;">
+        {% for notif in notifications %}
+        <div class="surface" style="padding: 22px 26px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+            <b style="font-size: 16px; color: var(--ink);">{{ notif.title }}</b>
+            <small style="color: var(--muted);">{{ notif.created_at }}</small>
           </div>
-          <p style="margin: 0; color: var(--ink-secondary); font-size: 13px; line-height: 1.6;">{{ note.message }}</p>
+          <p style="color: var(--ink-secondary); font-size: 14px; margin: 0; line-height: 1.6;">{{ notif.message }}</p>
         </div>
         {% else %}
-        <div style="text-align: center; padding: 40px; color: var(--muted);">
-          <span style="font-size: 32px; display: block; margin-bottom: 8px;">✦</span>
-          <b>You're all caught up!</b>
-          <p style="font-size: 12px; margin-top: 4px;">No unread administrative announcements.</p>
+        <div class="surface" style="padding: 24px; text-align: center; color: var(--muted);">
+          No notifications posted yet.
         </div>
         {% endfor %}
       </div>
-    </section>
-  </div>
-</main>
-<div class="toast-region" aria-live="polite"></div>
+    </div>
+  </main>
 </body>
 </html>

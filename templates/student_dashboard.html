@@ -1,123 +1,119 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Your learning space — OpsPilot</title>
+  <meta charset="UTF-8">
+  <title>Student Learning Space | OpsPilot</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-  <script defer src="{{ url_for('static', filename='script.js') }}"></script>
 </head>
-<body class="app-page student-app">
-<aside class="sidebar student-sidebar">
-  <a class="brand" href="/"><span class="brand-mark">O</span> OpsPilot</a>
-  <div class="side-label">YOUR SPACE</div>
-  <a class="side-link active" href="/student">▦ <span>My overview</span></a>
-  <a class="side-link" href="/student/schedule">◷ <span>My schedule</span></a>
-  <a class="side-link" href="/student/updates">✳ <span>Updates & Notices</span></a>
-  <div class="sidebar-bottom">
-    <div class="user-badge-profile">
-      <span class="user-face-avatar">🎓</span>
-      <div>
-        <b>{{ student.name }}</b>
-        <small>{{ batch.name if batch else 'Student' }}</small>
-      </div>
+<body class="app-page">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark">✦</div>
+      <span>OpsPilot</span>
     </div>
-    <a class="side-link" href="/logout">↪ <span>Log out</span></a>
-  </div>
-</aside>
+    <div class="side-label">Student Space</div>
+    <a href="/student" class="side-link active">🎓 <span>My Overview</span></a>
+    <a href="/student/schedule" class="side-link">📅 <span>My Schedule</span></a>
+    <a href="/student/updates" class="side-link">🔔 <span>Notices</span></a>
 
-<main class="dashboard-main">
-  <header class="dash-top">
-    <div class="crumb">My space <span>/</span> <b>Overview</b></div>
-    <div class="top-controls">
-      <span class="today-label">ACTIVE SESSION</span>
-      <div class="profile-chip">
-        <span class="profile-avatar">🎓</span>
-        <span><b>{{ student.name }}</b><small>{{ batch.name if batch else 'Cohort A' }}</small></span>
-      </div>
-      <a href="/logout" class="button button-small button-light" style="margin-left: 10px;">Sign out</a>
-    </div>
-  </header>
-
-  <div class="dashboard-content">
-    <div class="student-welcome">
-      <div>
-        <div class="eyebrow">YOUR LEARNING SPACE</div>
-        <h1>Hi, {{ student.name.split(' ')[0] }} <span>✦</span></h1>
-        <p>Keep your momentum going. Here’s your learning snapshot.</p>
-      </div>
-      <div class="welcome-date">{{ batch.course if batch else 'Software Track' }} <span>·</span> {{ batch.name if batch else 'Cohort A' }}</div>
-    </div>
-
-    <!-- Student Stats -->
-    <section class="student-stats">
-      <article class="student-stat-card progress-main">
-        <span class="student-stat-label">ATTENDANCE</span>
-        <div class="progress-layout">
-          <div class="progress-ring" style="--progress: {{ att_pct }}%">
-            <span>{{ att_pct }}<small>%</small></span>
-          </div>
-          <div>
-            <b>Cohort Standing</b>
-            <p>Your verified attendance across completed lectures.</p>
-            <small class="green">Institute benchmark: 85%</small>
-          </div>
-        </div>
-      </article>
-
-      <article class="student-stat-card">
-        <span class="student-stat-label">YOUR BATCH</span>
-        <span class="student-icon-box">▤</span>
-        <b class="student-stat-value">{{ batch.name if batch else 'General Cohort' }}</b>
-        <p>{{ batch.course if batch else 'Engineering Foundations' }}</p>
-        <div class="student-stat-foot">Enrolled learner <span>↗</span></div>
-      </article>
-
-      <article class="student-stat-card">
-        <span class="student-stat-label">TUITION LEDGER</span>
-        <span class="student-icon-box coin">₹</span>
-        <b class="student-stat-value">{{ fee.status if fee else 'All clear' }}</b>
-        <p>
-          {% if fee %}
-            ₹{{ fee.amount }} · Due {{ fee.due_date }}
-          {% else %}
-            No pending installments
-          {% endif %}
-        </p>
-        <div class="student-stat-foot">Tenancy-isolated record <span>→</span></div>
-      </article>
-    </section>
-
-    <!-- Student Copilot -->
-    <section class="surface copilot-card" style="margin-top: 22px; padding: 22px;">
-      <div class="copilot-head">
-        <span class="copilot-icon">✳</span>
+    <div class="sidebar-bottom">
+      <div class="user-badge-profile">
+        <span class="user-face-avatar">🎓</span>
         <div>
-          <h2>Ask Student Copilot</h2>
-          <p>Personalized queries for your attendance and schedules</p>
+          <b>{{ student.name }}</b>
+          <small>{{ batch.name }}</small>
         </div>
-        <span class="live-pill">READY</span>
       </div>
-      
-      <div class="chat-messages" data-chat style="height: 180px; overflow-y: auto;">
-        <div class="bot-message">
-          <span class="bot-avatar">✳</span>
-          <div>Hi {{ student.name.split(' ')[0] }}! Ask me about your attendance rate or timetable.</div>
+      <a href="/logout" class="button button-light button-small" style="width: 100%;">Sign Out</a>
+    </div>
+  </aside>
+
+  <main class="dashboard-main">
+    <header class="dash-top">
+      <div class="crumb">Student Hub <span>/</span> <b>Overview</b></div>
+      <div class="top-controls">
+        <span class="badge badge-live">{{ student.id }}</span>
+      </div>
+    </header>
+
+    <div class="dashboard-content">
+      <div class="dash-heading">
+        <div>
+          <h1>Welcome, {{ student.name }}</h1>
+          <p>Track your attendance health, weekly lab sessions, and tuition receipts.</p>
         </div>
       </div>
 
-      <div class="suggestion-row">
-        <button type="button" data-prompt="What is my attendance rate?">My Attendance</button>
-        <button type="button" data-prompt="Show my timetable">My Schedule</button>
+      <div class="student-stats" style="margin-bottom: 24px;">
+        <div class="surface" style="padding: 24px 26px; position: relative;">
+          <span style="font-size: 11.5px; font-weight: 800; color: var(--muted);">ATTENDANCE PERCENTAGE</span>
+          <div class="progress-layout">
+            <div class="progress-ring" style="--progress: {{ att_pct }}%;">
+              <span>{{ att_pct }}%</span>
+            </div>
+            <div>
+              <b style="font-size: 18px; color: var(--ink);">Attendance Health</b>
+              <p style="font-size: 13px; color: var(--muted); margin-top: 4px;">Minimum 75% required for certification exam eligibility.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="surface" style="padding: 24px 26px; position: relative;">
+          <span style="font-size: 11.5px; font-weight: 800; color: var(--muted);">ENROLLED COHORT</span>
+          <span class="student-icon-box">📚</span>
+          <b class="student-stat-value">{{ batch.name }}</b>
+          <small style="color: var(--muted);">{{ batch.course }}</small>
+        </div>
+
+        <div class="surface" style="padding: 24px 26px; position: relative;">
+          <span style="font-size: 11.5px; font-weight: 800; color: var(--muted);">TUITION LEDGER</span>
+          <span class="student-icon-box coin">₹</span>
+          <b class="student-stat-value">₹{{ fee.amount if fee else 25000 }}</b>
+          {% if fee and fee.status == 'PAID' %}
+          <span class="badge badge-live" style="margin-top: 6px; display: inline-block;">Cleared</span>
+          {% else %}
+          <span class="badge badge-warn" style="margin-top: 6px; display: inline-block;">Due: {{ fee.due_date if fee else '2026-11-15' }}</span>
+          {% endif %}
+        </div>
       </div>
 
-      <form class="chat-form" data-chat-form>
-        <input name="message" placeholder="Ask about your sessions or cohort..." aria-label="Ask OpsPilot">
-        <button type="submit" aria-label="Send message">↑</button>
-      </form>
-    </section>
-  </div>
-</main>
-<div class="toast-region" aria-live="polite"></div>
+      <div class="copilot-card">
+        <div class="copilot-head">
+          <div class="copilot-header-left">
+            <div class="copilot-icon">✦</div>
+            <div>
+              <h2>Personal Learning Copilot</h2>
+              <p>Isolated student assistant for timetable queries and lecture history.</p>
+            </div>
+          </div>
+          <span class="live-pill">Student Isolated</span>
+        </div>
+
+        <div class="chat-messages" data-chat style="height: 300px;">
+          <div class="bot-message">
+            <span class="bot-avatar">✦</span>
+            <div class="bot-bubble">
+              <p>Hi {{ student.name }}! You can ask me about your weekly lecture timetable or check your personal attendance history.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="suggestion-row">
+          <button type="button" data-prompt="Show my schedule">📅 My Full-Week Timetable</button>
+          <button type="button" data-prompt="Show my attendance">📊 My Attendance Logs</button>
+          <button type="button" data-prompt="Show fees">💳 My Tuition Statement</button>
+        </div>
+
+        <div class="chat-form-wrap">
+          <form class="chat-form" data-chat-form>
+            <input type="text" name="message" placeholder="Ask e.g. 'Show my schedule'..." autocomplete="off">
+            <button type="submit">↑</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
 </html>

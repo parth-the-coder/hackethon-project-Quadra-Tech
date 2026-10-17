@@ -1,158 +1,177 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Operations overview — OpsPilot</title>
+  <meta charset="UTF-8">
+  <title>Administration Overview | OpsPilot</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-  <script defer src="{{ url_for('static', filename='script.js') }}"></script>
 </head>
-<body class="app-page" data-role="{{ role }}">
-<aside class="sidebar">
-  <a class="brand" href="/"><span class="brand-mark">O</span> OpsPilot</a>
-  <div class="side-label">WORKSPACE</div>
-  <a class="side-link active" href="/admin">▦ <span>Overview</span></a>
-  <a class="side-link" href="/admin/students">♙ <span>Students Directory</span></a>
-  <a class="side-link" href="/admin/schedule">◷ <span>Active Schedule</span></a>
-  <div class="sidebar-bottom">
-    <div class="user-badge-profile">
-      <span class="user-face-avatar">{% if role == 'ADMIN' %}👑{% else %}👨‍🏫{% endif %}</span>
-      <div>
-        <b>{{ user_name }}</b>
-        <small>{{ role|title }} Workspace</small>
-      </div>
+<body class="app-page">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark">✦</div>
+      <span>OpsPilot</span>
     </div>
-    <a class="side-link" href="/logout">↪ <span>Log out</span></a>
-  </div>
-</aside>
+    <div class="side-label">Admin Console</div>
+    <a href="/admin" class="side-link active">📊 <span>Overview</span></a>
+    <a href="/admin/students" class="side-link">👥 <span>Learners Directory</span></a>
+    <a href="/admin/schedule" class="side-link">📅 <span>Institute Timetable</span></a>
 
-<main class="dashboard-main">
-  <header class="dash-top">
-    <div class="crumb">Workspace <span>/</span> <b>Overview</b></div>
-    <div class="top-controls">
-      <div class="profile-chip">
-        <span class="profile-avatar">{% if role == 'ADMIN' %}DM{% else %}RV{% endif %}</span>
-        <span><b>{{ user_name }}</b><small>{{ role|title }} view</small></span>
-      </div>
-      <a href="/logout" class="button button-small button-light" style="margin-left: 10px;">Sign out</a>
-    </div>
-  </header>
-
-  <div class="dashboard-content">
-    <div class="dash-heading">
-      <div>
-        <div class="eyebrow">SYSTEMS OPERATIONAL <span class="green">· LIVE DATA</span></div>
-        <h1>Good morning, {{ user_name.split(' ')[0] }} <span>✦</span></h1>
-        <p>Live operational oversight, real-time analytics, and AI decision copilot.</p>
-      </div>
-    </div>
-
-    <!-- Live Dynamic Metrics Grid -->
-    <section class="stats-grid">
-      <article class="stat-card">
-        <div class="stat-card-head">ENROLLED LEARNERS <span>♙</span></div>
-        <b>{{ total_students }}</b>
-        <small class="stat-foot">Real-time database count</small>
-        <div class="sparkline">⌁</div>
-      </article>
-      <article class="stat-card">
-        <div class="stat-card-head">INSTITUTE ATTENDANCE <span>◷</span></div>
-        <b>{{ avg_attendance }}<small>%</small></b>
-        <small class="stat-foot">Computed from live sessions</small>
-        <div class="sparkline teal">⌁</div>
-      </article>
-      <article class="stat-card">
-        <div class="stat-card-head">ACTIVE BATCHES <span>▤</span></div>
-        <b>{{ total_batches }}</b>
-        <small class="stat-foot">Software & Design Tracks</small>
-        <div class="sparkline orange">⌁</div>
-      </article>
-      <article class="stat-card">
-        <div class="stat-card-head">OVERDUE ACCOUNTS <span>◎</span></div>
-        <b>{{ overdue_count }}</b>
-        <small class="stat-foot">Installments requiring action</small>
-        <div class="stat-card-alert">!</div>
-      </article>
-    </section>
-
-    <!-- Attendance Graph Surface -->
-    <section class="surface" style="margin-top: 18px; padding: 22px;">
-      <div class="surface-head">
+    <div class="sidebar-bottom">
+      <div class="user-badge-profile">
+        <span class="user-face-avatar">👨‍💼</span>
         <div>
-          <h2>Institute Attendance Analytics</h2>
-          <p>Real-time attendance trend across registered cohorts</p>
-        </div>
-        <div class="chart-legend">
-          <span><i></i> Live Rate: <b>{{ avg_attendance }}%</b></span>
+          <b>{{ user_name }}</b>
+          <small>{{ role }} Mode</small>
         </div>
       </div>
-      
-      <div class="line-chart" style="margin-top: 24px;">
-        <div class="chart-y">
-          <span>100%</span>
-          <span>75%</span>
-          <span>50%</span>
-          <span>25%</span>
-          <span>0%</span>
-        </div>
+      <a href="/logout" class="button button-light button-small" style="width: 100%;">Sign Out</a>
+    </div>
+  </aside>
 
-        {% if total_students == 0 or avg_attendance == 0.0 %}
-        <svg viewBox="0 0 700 160" preserveAspectRatio="none" role="img" style="width:100%; height:140px;">
-          <line x1="0" y1="140" x2="700" y2="140" stroke="#cbd5e1" stroke-width="2" stroke-dasharray="4" />
-          <text x="350" y="80" text-anchor="middle" fill="#94a3b8" font-size="12">No attendance sessions logged yet. Log sessions in Students Directory to plot curve.</text>
-        </svg>
-        {% else %}
-        <svg viewBox="0 0 700 160" preserveAspectRatio="none" role="img" style="width:100%; height:140px;">
-          <defs>
-            <linearGradient id="attGradient" x1="0" x2="0" y1="0" y2="1">
-              <stop offset="0%" stop-color="#137c68" stop-opacity="0.25"/>
-              <stop offset="100%" stop-color="#137c68" stop-opacity="0.0"/>
-            </linearGradient>
-          </defs>
-          <path class="chart-area" d="M0 130 C120 115 200 90 320 60 S520 40 700 25 L700 150 L0 150 Z" fill="url(#attGradient)"/>
-          <path class="chart-line" d="M0 130 C120 115 200 90 320 60 S520 40 700 25" fill="none" stroke="#137c68" stroke-width="3"/>
-          <circle cx="700" cy="25" r="5" fill="#137c68" />
-        </svg>
-        {% endif %}
-
-        <div class="chart-days">
-          <span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span>
+  <main class="dashboard-main">
+    <header class="dash-top">
+      <div class="crumb">Institute Operations <span>/</span> <b>Overview</b></div>
+      <div class="top-controls">
+        <div class="profile-chip">
+          <div class="profile-avatar">{{ user_name[0] }}</div>
+          <b>{{ user_name }}</b>
+          <span class="badge badge-live">{{ role }}</span>
         </div>
       </div>
-    </section>
+    </header>
 
-    <!-- Operational AI Copilot Surface -->
-    <section class="surface copilot-card" style="margin-top: 18px; padding: 22px;">
-      <div class="copilot-head">
-        <span class="copilot-icon">✳</span>
+    <div class="dashboard-content">
+      <div class="dash-heading">
         <div>
-          <h2>Ask OpsPilot</h2>
-          <p>Role-Aware Operational Intelligence</p>
-        </div>
-        <span class="live-pill">READY</span>
-      </div>
-      
-      <div class="chat-messages" data-chat style="height: 220px; overflow-y: auto;">
-        <div class="bot-message">
-          <span class="bot-avatar">✳</span>
-          <div>Hi {{ user_name.split(' ')[0] }}. Ask me about student attendance, schedules, or pending fee collections.</div>
+          <h1>Operations Center</h1>
+          <p>Real-time metrics, autonomous bulk commands, and AI Copilot.</p>
         </div>
       </div>
 
-      <div class="suggestion-row">
-        <button type="button" data-prompt="Show all registered students">Students</button>
-        <button type="button" data-prompt="Show students with overdue fees">Overdue fees</button>
-        <button type="button" data-prompt="Show schedule">Schedule</button>
+      <!-- Live Counters -->
+      <div class="stats-grid" style="margin-bottom: 24px;">
+        <div class="stat-card">
+          <div class="stat-card-head">
+            <span>TOTAL LEARNERS</span>
+            <span class="badge badge-live">Verified</span>
+          </div>
+          <b>{{ total_students }}</b>
+          <div class="stat-foot">Registered across active cohorts</div>
+          <div class="sparkline">👥</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-card-head">
+            <span>ATTENDANCE PULSE</span>
+            <span class="badge badge-live">Live</span>
+          </div>
+          <b style="color: var(--green);">{{ avg_attendance }}%</b>
+          <div class="stat-foot">Verified presence across all sessions</div>
+          <div class="sparkline">📈</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-card-head">
+            <span>ACTIVE TRACKS</span>
+            <span class="badge badge-neutral">Curriculum</span>
+          </div>
+          <b>{{ total_batches }}</b>
+          <div class="stat-foot">Python Full Stack & React Masters</div>
+          <div class="sparkline">📚</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-card-head">
+            <span>FINANCIAL OVERDUE</span>
+            {% if overdue_count > 0 %}
+            <span class="badge badge-warn">Attention</span>
+            {% else %}
+            <span class="badge badge-live">Healthy</span>
+            {% endif %}
+          </div>
+          <b style="color: {% if overdue_count > 0 %}#f59e0b{% else %}var(--green){% endif %};">{{ overdue_count }}</b>
+          <div class="stat-foot">Unpaid tuition balances</div>
+          <div class="sparkline">💳</div>
+        </div>
       </div>
 
-      <form class="chat-form" data-chat-form>
-        <input name="message" placeholder="Ask about operations or draft a reminder..." aria-label="Ask OpsPilot">
-        <button type="submit" aria-label="Send message">↑</button>
-      </form>
-      <small class="copilot-caption">Read-only data access · Communications require administrator sign-off</small>
-    </section>
-  </div>
-</main>
-<div class="toast-region" aria-live="polite"></div>
+      <!-- Weekly Trendline -->
+      <div class="surface" style="padding: 24px 28px; margin-bottom: 28px;">
+        <div class="surface-head">
+          <div>
+            <h2>Weekly Institute Attendance Velocity</h2>
+            <p>Monitored attendance rates across scheduled cohorts.</p>
+          </div>
+          <span class="badge badge-live">100% Conflict Free</span>
+        </div>
+        <div class="line-chart">
+          <div class="chart-y">
+            <span>100%</span>
+            <span>75%</span>
+            <span>50%</span>
+            <span>25%</span>
+          </div>
+          <svg style="width: 100%; height: 138px; overflow: visible;">
+            <polyline fill="none" stroke="var(--green)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"
+              points="0,60 180,45 360,75 540,30 720,40 900,20" />
+            <circle cx="0" cy="60" r="4" fill="var(--green)" />
+            <circle cx="180" cy="45" r="4" fill="var(--green)" />
+            <circle cx="360" cy="75" r="4" fill="var(--green)" />
+            <circle cx="540" cy="30" r="4" fill="var(--green)" />
+            <circle cx="720" cy="40" r="4" fill="var(--green)" />
+            <circle cx="900" cy="20" r="4" fill="var(--green)" />
+          </svg>
+          <div class="chart-days">
+            <span>Monday</span><span>Tuesday</span><span>Wednesday</span><span>Thursday</span><span>Friday</span><span>Saturday</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- AI Copilot Interface -->
+      <div class="copilot-card">
+        <div class="copilot-head">
+          <div class="copilot-header-left">
+            <div class="copilot-icon">✦</div>
+            <div>
+              <h2>OpsPilot AI Copilot</h2>
+              <p>Autonomous operational engine with live database function routing.</p>
+            </div>
+          </div>
+          <div style="display: flex; gap: 10px; align-items: center;">
+            <span class="live-pill">Gemini 2.5 Active</span>
+            <button class="copilot-clear-btn" type="button">Clear Chat</button>
+          </div>
+        </div>
+
+        <div class="chat-messages" data-chat style="height: 350px;">
+          <div class="bot-message">
+            <span class="bot-avatar">✦</span>
+            <div class="bot-bubble">
+              <p>Hello <b>{{ user_name }}</b>! I'm OpsPilot. I can run operational SQL audits, log batch attendance, retrieve student records, or resolve schedule collisions.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="suggestion-row">
+          <button type="button" data-prompt="Show students list">👥 Enrolled Students</button>
+          <button type="button" data-prompt="Show weekly schedule">📅 Full Timetable</button>
+          {% if role == 'ADMIN' %}
+          <button type="button" data-prompt="Show overdue fees">💸 Overdue Fees</button>
+          <button type="button" data-prompt="Mark all students present">⚡ Auto-Mark Batch Present</button>
+          {% endif %}
+        </div>
+
+        <div class="chat-form-wrap">
+          <form class="chat-form" data-chat-form>
+            <input type="text" name="message" placeholder="Ask e.g. 'Show attendance for all students' or 'Show overdue fees'..." autocomplete="off">
+            <button type="submit">↑</button>
+          </form>
+          <small class="copilot-caption">Autonomous SQL AST Firewall active. Strict tenant isolation enforced.</small>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
 </html>

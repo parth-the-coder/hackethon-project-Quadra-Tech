@@ -1,78 +1,43 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Student Portal Sign In — OpsPilot</title>
+  <meta charset="UTF-8">
+  <title>Student Learning Space Login | OpsPilot</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-  <script defer src="{{ url_for('static', filename='script.js') }}"></script>
 </head>
-<body class="auth-page student-auth">
-<a class="brand auth-brand" href="/" style="position: absolute; top: 28px; left: 36px; z-index: 10;">
-  <span class="brand-mark">O</span> OpsPilot
-</a>
-
-<main class="auth-layout" style="display: grid; grid-template-columns: 1.1fr 1fr; min-height: 100vh;">
-  <!-- Left Visual Column with Learner Photography -->
-  <section style="position: relative; overflow: hidden; display: flex; flex-direction: column; justify-content: flex-end; padding: 60px 48px; color: #fff;">
-    <div style="position: absolute; inset: 0; background-image: url('https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=1200&q=80'); background-size: cover; background-position: center; filter: brightness(0.35);"></div>
-    <div style="position: relative; z-index: 2; max-width: 480px;">
-      <span class="badge badge-live" style="background: rgba(13, 148, 136, 0.35); color: #5eead4; border-color: rgba(94, 234, 212, 0.4); margin-bottom: 14px; display: inline-block;">
-        LEARNER SPACE
-      </span>
-      <h1 style="font-size: 34px; margin: 0 0 12px; color: #ffffff; line-height: 1.15;">
-        Your daily rhythm & progress, in one place.
-      </h1>
-      <p style="color: #cbd5e1; font-size: 14px; margin: 0; line-height: 1.6;">
-        Check verified cohort attendance rings, weekly lecture timetables, fee receipts, and official broadcasts with strict row-level privacy.
-      </p>
+<body style="min-height: 100vh; display: grid; place-items: center; background: #0f2922;">
+  <div style="width: min(440px, calc(100% - 32px)); background: #ffffff; border-radius: 20px; padding: 36px 32px; box-shadow: var(--shadow-lg);">
+    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 24px;">
+      <div class="brand-mark">🎓</div>
+      <b style="font-size: 20px; font-family: 'Manrope', sans-serif;">Learner Portal</b>
     </div>
-  </section>
 
-  <!-- Right Form Column -->
-  <section style="display: grid; place-items: center; padding: 40px 30px; background: var(--paper);">
-    <div style="width: min(420px, 100%); background: #ffffff; padding: 36px; border-radius: 20px; border: 1px solid var(--line); box-shadow: var(--shadow-md);">
-      <a href="/" style="font-size: 12px; color: var(--muted); font-weight: 600;">← Back to Home</a>
-      <h2 style="font-size: 24px; margin: 18px 0 6px;">Sign in to Learner Space</h2>
-      <p style="color: var(--muted); font-size: 13px; margin-bottom: 20px;">Use the email and password assigned by administration.</p>
+    <h2 style="font-size: 24px; margin-bottom: 6px;">Sign In to Your Learning Space</h2>
+    <p style="font-size: 13.5px; color: var(--muted); margin-bottom: 24px;">
+      Access your personalized timetable, attendance velocity, and fee receipts.
+    </p>
 
-      {% if error %}
-      <div style="background: var(--red-soft); border: 1px solid #fca5a5; color: var(--red); padding: 10px 14px; border-radius: 8px; font-size: 12px; margin-bottom: 16px;">
-        {{ error }}
-      </div>
-      {% endif %}
-
-      <div style="background: #f8fafc; border: 1px solid var(--line); border-left: 4px solid #f59e0b; padding: 12px 14px; border-radius: 0 10px 10px 0; margin-bottom: 20px;">
-        <span style="font-size: 11px; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 4px;">
-          Student Credentials:
-        </span>
-        <span style="font-size: 12px; color: var(--ink-secondary);">
-          Login with any email onboarded through the Admin directory (Default password: <code>pass123</code>).
-        </span>
-      </div>
-
-      <form method="POST" action="/login/student" style="display: grid; gap: 14px;">
-        <div>
-          <label style="font-size: 11px; text-transform: uppercase; font-weight: 800; color: var(--muted); display: block; margin-bottom: 5px;">
-            Student Email
-          </label>
-          <input id="student_email" name="email" type="email" class="input-field" placeholder="e.g. siddhika@trainwise.com" required>
-        </div>
-        <div>
-          <label style="font-size: 11px; text-transform: uppercase; font-weight: 800; color: var(--muted); display: block; margin-bottom: 5px;">
-            Password
-          </label>
-          <div style="position: relative;">
-            <input id="student_pass" name="password" type="password" class="input-field" placeholder="••••••••" required style="padding-right: 50px;">
-            <button class="password-toggle" type="button" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); font-size: 11px; color: var(--muted); font-weight: 700;">Show</button>
-          </div>
-        </div>
-        <button type="submit" class="button button-dark" style="width: 100%; height: 44px; margin-top: 6px;">
-          Enter Student Space →
-        </button>
-      </form>
+    {% if error %}
+    <div style="background: var(--red-soft); color: var(--red); padding: 12px 14px; border-radius: 8px; font-size: 13px; font-weight: 600; margin-bottom: 18px; border: 1px solid #fecaca;">
+      {{ error }}
     </div>
-  </section>
-</main>
+    {% endif %}
+
+    <form method="POST" action="/login/student">
+      <div style="margin-bottom: 16px;">
+        <label style="display: block; font-size: 12.5px; font-weight: 700; margin-bottom: 6px;">Student Login Email</label>
+        <input type="email" name="email" class="input-field" placeholder="parth@trainwise.com" required value="parth@trainwise.com">
+      </div>
+      <div style="margin-bottom: 24px;">
+        <label style="display: block; font-size: 12.5px; font-weight: 700; margin-bottom: 6px;">Password</label>
+        <input type="password" name="password" class="input-field" placeholder="••••••••" required value="pass123">
+      </div>
+      <button type="submit" class="button button-dark" style="width: 100%; height: 46px;">Open Learning Space ↗</button>
+    </form>
+
+    <div style="margin-top: 24px; padding-top: 18px; border-top: 1px solid var(--line); font-size: 13px; color: var(--muted); text-align: center;">
+      Switch to <a href="/admin_login" style="color: var(--green); font-weight: 700;">Staff Console</a> | <a href="/" style="color: var(--muted);">Back to Home</a>
+    </div>
+  </div>
 </body>
 </html>
