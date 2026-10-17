@@ -12,7 +12,6 @@ def init_db():
     cursor.executescript('''
     DROP TABLE IF EXISTS audit_logs;
     DROP TABLE IF EXISTS notifications;
-    DROP TABLE IF EXISTS recordings;
     DROP TABLE IF EXISTS schedule_slots;
     DROP TABLE IF EXISTS fees;
     DROP TABLE IF EXISTS attendance;
@@ -22,7 +21,6 @@ def init_db():
     DROP TABLE IF EXISTS batches;
     DROP TABLE IF EXISTS users;
 
-    -- Authentication and Accounts
     CREATE TABLE users (
         id TEXT PRIMARY KEY,
         email TEXT UNIQUE NOT NULL,
@@ -105,7 +103,7 @@ def init_db():
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
 
-    -- Base Institute Setup (Only Batches, Rooms, Trainers)
+    -- Base Cohorts, Trainers, and Labs
     INSERT INTO batches (id, name, course) VALUES
     ('b_py', 'Python Full Stack', 'Software Engineering'),
     ('b_react', 'React Masters', 'Frontend Engineering');
@@ -120,9 +118,11 @@ def init_db():
 
     INSERT INTO schedule_slots (id, batch_id, trainer_id, room_id, day_of_week, start_time, end_time) VALUES
     ('slot_1', 'b_py', 'tr_1', 'rm_101', 'Monday', '10:00 AM', '12:00 PM'),
-    ('slot_2', 'b_react', 'tr_2', 'rm_102', 'Monday', '02:00 PM', '04:00 PM');
+    ('slot_2', 'b_react', 'tr_2', 'rm_102', 'Monday', '02:00 PM', '04:00 PM'),
+    ('slot_3', 'b_py', 'tr_1', 'rm_101', 'Wednesday', '10:00 AM', '12:00 PM'),
+    ('slot_4', 'b_react', 'tr_2', 'rm_102', 'Thursday', '02:00 PM', '04:00 PM');
 
-    -- Institute Staff Only (NO HARDCODED STUDENTS)
+    -- Core Credentials (Zero mock students hardcoded)
     INSERT INTO users (id, email, password, role, student_id, trainer_id) VALUES
     ('u_admin', 'admin@trainwise.com', 'admin123', 'ADMIN', NULL, NULL),
     ('u_trainer', 'rahul@trainwise.com', 'trainer123', 'TRAINER', NULL, 'tr_1');
@@ -138,4 +138,4 @@ def get_db():
 
 if __name__ == '__main__':
     init_db()
-    print("Database reset: Students cleared. Ready for Admin onboarding.")
+    print("Database reset: Students cleared. System ready for dynamic Admin onboarding.")
